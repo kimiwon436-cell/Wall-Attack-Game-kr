@@ -104,7 +104,7 @@
         <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 10조</p></div>
         <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>졸라맨<br>💰1,000</p></div>
         <div class="buy-card" onclick="buyCharacter(1)"><img src="char2_idle.png"><p>궁수<br>💰5,000</p></div>
-        <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사<br>💰10,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>마법사<br>💰10,000</p></div>
         <div class="buy-card" onclick="buyCharacter(3)"><img src="char4_idle.png"><p>검사<br>💰50,000</p></div>
         <div class="buy-card" onclick="buyCharacter(4)"><img src="char5_idle.png"><p>광전사<br>💰85,000</p></div>
         <div class="buy-card" onclick="buyCharacter(5)"><img src="char6_idle.png"><p>탱크<br>💰100,000</p></div>
@@ -452,7 +452,7 @@
                 // 🌟 중요: 클리어 후 데이터 삭제 (처음부터 다시 하기 위해)
                 await db.collection("saves").doc(currentUser).delete();
             } else {
-                alert("10억 원이 필요합니다!");
+                alert("10조 원이 필요합니다!");
             }
         }
 
@@ -484,16 +484,25 @@
     		document.getElementById("money").innerText = formatMoney(money);
     		document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
     		document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
-    
-    		// 버프 상태 텍스트 업데이트
+
+    		// --- 배수 계산 로직 ---
+    		let totalDmgMult = (p2Red > 0 ? 2 : 1) * (p3Red > 0 ? 3 : 1) * (p5Red > 0 ? 5 : 1);
+   		let totalSpdMult = (p2Blue > 0 ? 2 : 1) * (p3Blue > 0 ? 3 : 1) * (p5Blue > 0 ? 5 : 1) * (feverMultiplier || 1.0);
+    		let totalGoldMult = (p2Gold > 0 ? 2 : 1) * (p3Gold > 0 ? 3 : 1) * (p5Gold > 0 ? 5 : 1) * (hasRelicGreen ? 2 : 1) * (cumulativeGoldMult || 1.0);
+
     		let bText = "";
-    		if(p2Red > 0 || p3Red > 0 || p5Red > 0) bText += `[⚔️대미지 UP] `;
-    		if(p2Blue > 0 || p3Blue > 0 || p5Blue > 0) bText += `[⚡공속 UP] `;
-    		if(p2Gold > 0 || p3Gold > 0 || p5Gold > 0) bText += `[💰골드 UP] `;
-    		if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
+    		// 대미지 배수 표시 (1배보다 클 때만)
+    		if(totalDmgMult > 1) bText += `[⚔️대미지 x${totalDmgMult.toFixed(1)}] `;
+    
+    		// 공속 배수 표시
+    		if(totalSpdMult > 1) bText += `[⚡공속 x${totalSpdMult.toFixed(1)}] `;
+    
+    		// 골드 배수 표시
+    		if(totalGoldMult > 1) bText += `[💰골드 x${totalGoldMult.toFixed(1)}] `;
+    
     		document.getElementById("buff-status").innerText = bText;
 
-    		// 유물 보유 시 버튼 디자인 업데이트
+    		// 유물 버튼 상태 업데이트 (기존 유지)
     		if(hasRelicRed) { 
         		let el = document.getElementById("relic-red");
         		if(el) { el.innerText = "🔥 붉은 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
