@@ -90,10 +90,12 @@
     </div>
 
     <div id="top-bar">
-        <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 1,000만</p></div>
-        <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>검사 💰1,000</p></div>
+        <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 10억</p></div>
+        <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>졸라맨 💰1,000</p></div>
         <div class="buy-card" onclick="buyCharacter(1)"><img src="char2_idle.png"><p>궁수 💰5,000</p></div>
         <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사 💰10,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(3)"><img src="char4_idle.png"><p>검사 💰50,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(4)"><img src="char5_idle.png"><p>광전사 💰135,000</p></div>
     </div>
 
     <div class="ui-box">
@@ -149,6 +151,8 @@
             { id: 0, damage: 10, cooldown: 0.5, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
             { id: 1, damage: 100, cooldown: 1, price: 5000, idleImg: "char2_idle.png", attackImg: "char2_attack.png" },
             { id: 2, damage: 1000, cooldown: 1.5, price: 10000, idleImg: "char3_idle.png", attackImg: "char3_attack.png" }
+            { id: 3, damage: 5500, cooldown: 0.5, price: 50000, idleImg: "char4_idle.png", attackImg: "char4_attack.png" }
+            { id: 4, damage: 11500, cooldown: 0.4, price: 135000, idleImg: "char5_idle.png", attackImg: "char5_attack.png" }
         ];
         let activeCharacters = [], savedCharactersList = [];
 
@@ -303,7 +307,7 @@
 	}
 
         async function buyEnding() {
-            if(money >= 10000000) {
+            if(money >= 1000000000) {
                 isGameRunning = false;
                 await db.collection("leaderboard").add({ username: currentUser, time: playTimeSeconds });
                 const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
@@ -312,7 +316,7 @@
                 document.getElementById("clear-time-text").innerText = `클리어 시간: ${formatTime(playTimeSeconds)}`;
                 document.getElementById("ending-screen").style.display = "flex";
                 await db.collection("saves").doc(currentUser).delete();
-            } else alert("1,000만 원이 필요합니다!");
+            } else alert("10억 원이 필요합니다!");
         }
 
         function showFloatingText(dmg, earned, element) {
