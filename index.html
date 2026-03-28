@@ -471,7 +471,13 @@
             if(clickCount >= 20) { feverMultiplier += 0.5; clickCount=0; document.getElementById("current-multiplier").innerText = feverMultiplier.toFixed(1); }
         }
 
-        function formatMoney(n) { return n >= 100000000 ? (n/100000000).toFixed(2)+"억" : (n >= 10000 ? (n/10000).toFixed(1)+"만" : Math.floor(n).toLocaleString()); }
+        function formatMoney(n) {
+    		if (n >= 10000000000000000) return (n / 10000000000000000).toFixed(2) + "경";
+    		if (n >= 1000000000000) return (n / 1000000000000).toFixed(2) + "조";
+    		if (n >= 100000000) return (n / 100000000).toFixed(2) + "억";
+    		if (n >= 10000) return (n / 10000).toFixed(1) + "만";
+    		return Math.floor(n).toLocaleString();
+	}
         function formatTime(s) { let m=Math.floor(s/60); let sec=Math.floor(s%60); return `${m}:${sec<10?'0'+sec:sec}`; }
 
         function updateUI() {
