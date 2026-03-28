@@ -26,7 +26,21 @@
         
         #leaderboard-list { list-style: none; padding: 0; text-align: left; max-height: 200px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; }
         #leaderboard-list li { padding: 5px 0; border-bottom: 1px solid #444; font-size: 14px; }
-
+	#buff-status { 
+    		display: flex; 
+    		flex-wrap: wrap; 
+    		gap: 5px; 
+    		color: #ff4444; 
+    		font-size: 13px; 
+    		margin-top: 5px; 
+    		font-weight: bold;
+	}
+	.buff-item {
+    		background: rgba(255, 0, 0, 0.1);
+    		border: 1px solid #ff4444;
+    		padding: 2px 6px;
+    		border-radius: 4px;
+	}
         /* 상단 바 */
         #top-bar { display: none; overflow-x: auto; background-color: #333; padding: 10px; height: 90px; gap: 10px; align-items: center; white-space: nowrap; box-sizing: border-box; }
         .buy-card { background: white; border: 2px solid #ffd700; border-radius: 8px; padding: 5px 10px; cursor: pointer; min-width: 100px; text-align: center; color: black;}
@@ -187,7 +201,9 @@
 	let cumulativeGoldMult = 1.0;
 
 	// [이벤트 및 피버]
-	let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
+	let feverMultiplier = 1.0; 
+	let feverActiveTime = 0; // 피버 남은 시간
+	let clickCount = 0;
 
         const characterData = [
             { id: 0, damage: 10, cooldown: 0.5, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
@@ -374,18 +390,18 @@
 
     		if (money >= prices[type]) {
         		money -= prices[type];
-        		// window[type]을 통해 변수 이름으로 직접 접근
-        		if (type === 'p2Red') p2Red += 60;
-        		else if (type === 'p2Blue') p2Blue += 60;
-        		else if (type === 'p2Gold') p2Gold += 60;
-        		else if (type === 'p3Red') p3Red += 60;
-        		else if (type === 'p3Blue') p3Blue += 60;
-        		else if (type === 'p3Gold') p3Gold += 60;
-        		else if (type === 'p5Red') p5Red += 60;
-        		else if (type === 'p5Blue') p5Blue += 60;
-        		else if (type === 'p5Gold') p5Gold += 60;
+        		// 지속 시간을 60에서 30으로 변경
+        		if (type === 'p2Red') p2Red += 30;
+        		else if (type === 'p2Blue') p2Blue += 30;
+        		else if (type === 'p2Gold') p2Gold += 30;
+        		else if (type === 'p3Red') p3Red += 30;
+        		else if (type === 'p3Blue') p3Blue += 30;
+        		else if (type === 'p3Gold') p3Gold += 30;
+        		else if (type === 'p5Red') p5Red += 30;
+        		else if (type === 'p5Blue') p5Blue += 30;
+        		else if (type === 'p5Gold') p5Gold += 30;
         		updateUI();
-   		} else alert("돈이 부족합니다!");
+    		} else alert("돈이 부족합니다!");
 	}
 
 	function buyRelic(c) {
@@ -468,10 +484,22 @@
             document.getElementById("game-board").appendChild(floater); setTimeout(() => floater.remove(), 1000);
         }
 
-        function clickEvent() {
-            clickCount++; document.getElementById("event-gauge").style.width = (clickCount*5)+"%";
-            if(clickCount >= 20) { feverMultiplier += 0.5; clickCount=0; document.getElementById("current-multiplier").innerText = feverMultiplier.toFixed(1); }
-        }
+        // [클릭 이벤트 함수] - 피버 활성화 로직 수정
+	function clickEvent() {
+    		if (feverActiveTime > 0) return; // 이미 피버 중이면 무시
+
+    		clickCount++;
+    		document.getElementById("event-gauge").style.width = (clickCount * 5) + "%";
+    
+    		if (clickCount >= 20) {
+        		clickCount = 0;
+        		feverActiveTime = 10; // 10초간 피버 유지
+        		feverMultiplier = 2.0; // 피버 시 공속 2배 추가 보너스
+        		document.getElementById("event-gauge").style.width = "0%";
+        		document.getElementById("fever-text").innerText = "🔥 피버 타임! (공속 2배) 🔥";
+        		document.getElementById("fever-text").style.color = "red";
+    		}
+	}
 
         function formatMoney(n) {
     		if (n >= 10000000000000000) return (n / 10000000000000000).toFixed(2) + "경";
@@ -487,40 +515,40 @@
     		document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
     		document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
 
-    		// --- 배수 계산 로직 ---
-    		let totalDmgMult = (p2Red > 0 ? 2 : 1) * (p3Red > 0 ? 3 : 1) * (p5Red > 0 ? 5 : 1);
-   		let totalSpdMult = (p2Blue > 0 ? 2 : 1) * (p3Blue > 0 ? 3 : 1) * (p5Blue > 0 ? 5 : 1) * (feverMultiplier || 1.0);
-    		let totalGoldMult = (p2Gold > 0 ? 2 : 1) * (p3Gold > 0 ? 3 : 1) * (p5Gold > 0 ? 5 : 1) * (hasRelicGreen ? 2 : 1) * (cumulativeGoldMult || 1.0);
+    		// --- 버프 타이머 및 텍스트 생성 ---
+    		let buffHTML = "";
+    
+   		// 물약 데이터 배열 (이름, 남은시간, 표시텍스트)
+    		const potions = [
+        		{ time: p2Red,  label: "⚔️대미지 x2" }, { time: p3Red,  label: "🔥대미지 x3" }, { time: p5Red,  label: "💎대미지 x5" },
+        		{ time: p2Blue, label: "⚡공속 x2" },   { time: p3Blue, label: "🌀공속 x3" },   { time: p5Blue, label: "🌌공속 x5" },
+        		{ time: p2Gold, label: "💰골드 x2" },   { time: p3Gold, label: "💎골드 x3" },   { time: p5Gold, label: "👑골드 x5" }
+    		];
 
-    		let bText = "";
-    		// 대미지 배수 표시 (1배보다 클 때만)
-    		if(totalDmgMult > 1) bText += `[⚔️대미지 x${totalDmgMult.toFixed(1)}] `;
-    
-    		// 공속 배수 표시
-    		if(totalSpdMult > 1) bText += `[⚡공속 x${totalSpdMult.toFixed(1)}] `;
-    
-    		// 골드 배수 표시
-    		if(totalGoldMult > 1) bText += `[💰골드 x${totalGoldMult.toFixed(1)}] `;
-    
-    		document.getElementById("buff-status").innerText = bText;
+    		potions.forEach(p => {
+        		if (p.time > 0) {
+            		buffHTML += `<span class="buff-item">${p.label} (${Math.ceil(p.time)}s)</span>`;
+        		}
+    		});
 
-    		// 유물 버튼 상태 업데이트 (기존 유지)
-    		if(hasRelicRed) { 
-        		let el = document.getElementById("relic-red");
-        		if(el) { el.innerText = "🔥 붉은 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+    		// 피버 타임 표시
+    		if (feverActiveTime > 0) {
+        		buffHTML += `<span class="buff-item" style="border-color:orange; color:orange;">🔥 피버! (${Math.ceil(feverActiveTime)}s)</span>`;
     		}
-    		if(hasRelicBlue) { 
-        		let el = document.getElementById("relic-blue");
-        		if(el) { el.innerText = "❄️ 푸른 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-    		}
-    		if(hasRelicGreen) { 
-        		let el = document.getElementById("relic-green");
-        		if(el) { el.innerText = "🍀 초록 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-    		}
-    		if(hasRelicYellow) { 
-        		let el = document.getElementById("relic-yellow");
-        		if(el) { el.innerText = "👑 황금 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-    		}
+
+    		document.getElementById("buff-status").innerHTML = buffHTML;
+
+    		// --- 유물 버튼 상태 업데이트 (기존과 동일) ---
+    		if(hasRelicRed) updateRelicUI("relic-red", "🔥 붉은 유물");
+    		if(hasRelicBlue) updateRelicUI("relic-blue", "❄️ 푸른 유물");
+    		if(hasRelicGreen) updateRelicUI("relic-green", "🍀 초록 유물");
+    		if(hasRelicYellow) updateRelicUI("relic-yellow", "👑 황금 유물");
+	}
+	
+	// 유물 UI 업데이트 보조 함수
+	function updateRelicUI(id, name) {
+    		let el = document.getElementById(id);
+    		if(el) { el.innerText = `${name} - [보유 중]`; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
 	}
 
         function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
@@ -531,13 +559,20 @@
     		let dt = 0.1; playTimeSeconds += dt;
 
     		// 1. 모든 물약 타이머 감소 (새 변수 이름 적용)
-    		if(p2Red > 0) p2Red -= dt; if(p2Blue > 0) p2Blue -= dt; if(p2Gold > 0) p2Gold -= dt;
-    		if(p3Red > 0) p3Red -= dt; if(p3Blue > 0) p3Blue -= dt; if(p3Gold > 0) p3Gold -= dt;
-    		if(p5Red > 0) p5Red -= dt; if(p5Blue > 0) p5Blue -= dt; if(p5Gold > 0) p5Gold -= dt;
-    
-    		if(feverActiveTime > 0) { 
-        		feverActiveTime -= dt; 
-        		if(feverActiveTime <= 0) feverMultiplier = 1.0; 
+    		if (p2Red > 0) p2Red -= dt; if (p2Blue > 0) p2Blue -= dt; if (p2Gold > 0) p2Gold -= dt;
+    		if (p3Red > 0) p3Red -= dt; if (p3Blue > 0) p3Blue -= dt; if (p3Gold > 0) p3Gold -= dt;
+    		if (p5Red > 0) p5Red -= dt; if (p5Blue > 0) p5Blue -= dt; if (p5Gold > 0) p5Gold -= dt;
+    		
+		if (feverActiveTime > 0) {
+        		feverActiveTime -= dt;
+        		document.getElementById("current-multiplier").innerText = feverMultiplier.toFixed(1);
+        		if (feverActiveTime <= 0) {
+            		feverActiveTime = 0;
+            		feverMultiplier = 1.0;
+            		document.getElementById("fever-text").innerText = "보너스! 광클하세요!";
+            		document.getElementById("fever-text").style.color = "black";
+            		document.getElementById("current-multiplier").innerText = "1.0";
+        		}
     		}
 
     		// 붉은 유물 효과 (초당 0.1% 대미지)
