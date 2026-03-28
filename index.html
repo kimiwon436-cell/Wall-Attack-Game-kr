@@ -284,12 +284,24 @@
 
         // 7. 게임 로직
         function spawnCharacterWithoutCost(id) {
-            const data = characterData[id];
-            const img = document.createElement("img"); img.className = "character"; img.src = data.idleImg;
-            img.style.right = (id === 0 ? 280 : 450) + (Math.random()*50) + "px";
-            document.getElementById("characters-container").appendChild(img);
-            activeCharacters.push({ element: img, data, timer: 0 });
-        }
+    		const data = characterData[id];
+    		const img = document.createElement("img");
+    		img.className = "character";
+    		img.src = data.idleImg;
+
+    		// 현재 배치된 캐릭터 수를 기준으로 X 좌표 결정 (간격 70px)
+    		// 벽(오른쪽)에서부터 250px 떨어진 지점에서 시작해 캐릭터가 늘어날수록 왼쪽으로 배치됩니다.
+    		const charIndex = activeCharacters.length;
+    		const xPos = 250 + (charIndex * 70); 
+    		img.style.right = xPos + "px";
+
+    		// Y 좌표(높이)는 40px ~ 70px 사이에서 랜덤하게 결정 (살짝의 입체감 부여)
+    		const yPos = 40 + (Math.random() * 30);
+    		img.style.bottom = yPos + "px";
+
+   		document.getElementById("characters-container").appendChild(img);
+    		tiveCharacters.push({ element: img, data, timer: 0 });
+	}
 
         function buyCharacter(id) {
             if(money >= characterData[id].price) {
