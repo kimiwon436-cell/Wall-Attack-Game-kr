@@ -133,23 +133,29 @@
                 <p>배수: <span id="current-multiplier">1.0</span>배</p>
             </div>
 
-	  <div id="shop-modal">
+	    <div id="shop-modal">
     		<button class="close-btn" onclick="toggleShop(false)">X 닫기</button>
     		<h2>🛒 프리미엄 온라인 상점</h2>
-    
-    		<h3>🧪 강화 물약</h3>
-    		<div class="shop-item" onclick="buyItem('red')">🍷 빨간 포션 (대미지 2배) - 💰1만</div>
-    		<div class="shop-item" onclick="buyItem('blue')">🧪 파란 포션 (공속 2배) - 💰1만</div>
-    		<div class="shop-item" onclick="buyItem('gold')">💰 황금 포션 (골드 2배) - 💰5만</div>
-    		<div class="shop-item" onclick="buyItem('triple')">⚡ 트립플 포션 (전부 3배) - 💰50만</div>
-    		<div class="shop-item" onclick="buyItem('penta')">🔥 펜타 포션 (전부 5배) - 💰200만</div>
+
+    		<h3>🧪 강화 물약 (60초 지속)</h3>
+    		<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+        		<div class="shop-item" onclick="buyItem('p2Red')">🍷 대미지 x2<br>💰1만</div>
+        		<div class="shop-item" onclick="buyItem('p2Blue')">🧪 공속 x2<br>💰1만</div>
+        		<div class="shop-item" onclick="buyItem('p2Gold')">💰 골드 x2<br>💰3만</div>
+        		<div class="shop-item" onclick="buyItem('p3Red')" style="border-color: #00ff00;">🔥 대미지 x3<br>💰15만</div>
+        		<div class="shop-item" onclick="buyItem('p3Blue')" style="border-color: #00ff00;">⚡ 공속 x3<br>💰15만</div>
+        		<div class="shop-item" onclick="buyItem('p3Gold')" style="border-color: #00ff00;">💎 골드 x3<br>💰25만</div>
+        		<div class="shop-item" onclick="buyItem('p5Red')" style="border-color: #ff00ff;">💎 대미지 x5<br>💰100만</div>
+        		<div class="shop-item" onclick="buyItem('p5Blue')" style="border-color: #ff00ff;">🌌 공속 x5<br>💰100만</div>
+        		<div class="shop-item" onclick="buyItem('p5Gold')" style="border-color: #ff00ff;">👑 골드 x5<br>💰150만</div>
+    		</div>
 
     		<h3>✨ 전설의 유물</h3>
-    		<div class="shop-item" id="relic-red" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 체력 0.1% 감소) - 💰5,000만</div>
-    		<div class="shop-item" id="relic-blue" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 10% 감소) - 💰1억</div>
-    		<div class="shop-item" id="relic-green" onclick="buyRelic('green')">🍀 초록 유물 (기본 골드 2배) - 💰5억</div>
-    		<div class="shop-item" id="relic-yellow" onclick="buyRelic('yellow')">👑 황금 유물 (타격 시 골드 0.05% 영구 누적 증가) - 💰10억</div>
-	  </div>
+    		<div class="shop-item" id="relic-red" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 체력 0.1% 감소) - 💰1,000만</div>
+    		<div class="shop-item" id="relic-blue" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 10% 감소) - 💰3,000만</div>
+    		<div class="shop-item" id="relic-green" onclick="buyRelic('green')">🍀 초록 유물 (기본 골드 2배) - 💰6,000만</div>
+    		<div class="shop-item" id="relic-yellow" onclick="buyRelic('yellow')">👑 황금 유물 (타격 시 골드 영구 누적) - 💰1억</div>
+	   </div>
         </div>
     </div>
 
@@ -170,21 +176,14 @@
         // 2. 변수 선언 (신규 유물 및 물약 효과 포함)
 	let currentUser = "", isGameRunning = false, money = 1000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
 
-	// [포션 타이머] 기존 2개에서 5개로 확장
-	let redPotionTime = 0;    // 대미지 2배
-	let bluePotionTime = 0;   // 공속 2배
-	let goldPotionTime = 0;   // 골드 2배
-	let triplePotionTime = 0; // 올스탯 3배
-	let pentaPotionTime = 0;  // 올스탯 5배
+	// [포션 타이머] x2, x3, x5 단계별로 세분화
+	let p2Red = 0, p2Blue = 0, p2Gold = 0;   // 2배 (대미지, 공속, 골드)
+	let p3Red = 0, p3Blue = 0, p3Gold = 0;   // 3배 (대미지, 공속, 골드)
+	let p5Red = 0, p5Blue = 0, p5Gold = 0;   // 5배 (대미지, 공속, 골드)
 
-	// [유물 보유 여부] 황금 유물(Yellow) 추가
-	let hasRelicRed = false;    // 초당 대미지
-	let hasRelicBlue = false;   // 시작 HP 감소
-	let hasRelicGreen = false;  // 기본 골드 2배
-	let hasRelicYellow = false; // 타격 시 골드 누적 증가 유물
-
-	// [누적 데이터] 황금 유물로 인해 쌓이는 골드 배수 (기본값 1.0 = 100%)
-	let cumulativeGoldMult = 1.0; 
+	// [유물 및 누적 데이터]
+	let hasRelicRed = false, hasRelicBlue = false, hasRelicGreen = false, hasRelicYellow = false;
+	let cumulativeGoldMult = 1.0;
 
 	// [이벤트 및 피버]
 	let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
@@ -275,13 +274,15 @@
             }
         }
 
-        function saveGameData() {
-            if(!currentUser || !isGameRunning) return;
-            db.collection("saves").doc(currentUser).set({
-                money, wallMaxHp, wallHp, wallLevel, playTimeSeconds,
-                hasRelicRed, hasRelicBlue, hasRelicGreen, savedCharactersList
-            }).catch(e => console.error(e));
-        }
+	function saveGameData() {
+    		if(!currentUser || !isGameRunning) return;
+    		db.collection("saves").doc(currentUser).set({
+        		money, wallMaxHp, wallHp, wallLevel, playTimeSeconds,
+        		hasRelicRed, hasRelicBlue, hasRelicGreen, hasRelicYellow, cumulativeGoldMult,
+        		p2Red, p2Blue, p2Gold, p3Red, p3Blue, p3Gold, p5Red, p5Blue, p5Gold, // 물약 추가
+        		savedCharactersList
+    		}).catch(e => console.error(e));
+	}
 
         // 6. 랭킹 시스템
         async function viewRanking() {
@@ -349,36 +350,63 @@
             } else alert("돈 부족!");
         }
 
+	// 물약 구매 함수
 	function buyItem(type) {
-    		let prices = { red: 10000, blue: 10000, gold: 50000, triple: 500000, penta: 2000000 };
+    		const prices = {
+        		p2Red: 10000, p2Blue: 10000, p2Gold: 30000,
+        		p3Red: 150000, p3Blue: 150000, p3Gold: 250000,
+        		p5Red: 1000000, p5Blue: 1000000, p5Gold: 1500000
+    		};
+
     		if (money >= prices[type]) {
         		money -= prices[type];
-        		if (type === 'red') redPotionTime += 60;
-        		else if (type === 'blue') bluePotionTime += 60;
-        		else if (type === 'gold') goldPotionTime += 60;
-        		else if (type === 'triple') triplePotionTime += 60;
-        		else if (type === 'penta') pentaPotionTime += 60;
+        		// window[type]을 통해 변수 이름으로 직접 접근
+        		if (type === 'p2Red') p2Red += 60;
+        		else if (type === 'p2Blue') p2Blue += 60;
+        		else if (type === 'p2Gold') p2Gold += 60;
+        		else if (type === 'p3Red') p3Red += 60;
+        		else if (type === 'p3Blue') p3Blue += 60;
+        		else if (type === 'p3Gold') p3Gold += 60;
+        		else if (type === 'p5Red') p5Red += 60;
+        		else if (type === 'p5Blue') p5Blue += 60;
+        		else if (type === 'p5Gold') p5Gold += 60;
         		updateUI();
-    		} else alert("돈 부족!");
+   		} else alert("돈이 부족합니다!");
 	}
 
 	function buyRelic(c) {
-    		let priceMap = { red: 50000000, blue: 100000000, green: 500000000, yellow: 1000000000 };
-    		let cost = priceMap[c];
-    
-    		if ((c === 'red' && hasRelicRed) || (c === 'blue' && hasRelicBlue) || 
-        		(c === 'green' && hasRelicGreen) || (c === 'yellow' && hasRelicYellow)) {
-        		return alert("이미 보유 중!");
+   		// 1. 요청하신 가격으로 재설정 (1,000만 ~ 1억)
+    		const priceMap = { 
+        		red: 10000000,    // 1,000만 (초당 대미지)
+        		blue: 30000000,   // 3,000만 (시작 HP 감소)
+        		green: 60000000,  // 6,000만 (기본 골드 2배)
+        		yellow: 100000000 // 1억 (타격 시 골드 무한 누적)
+    		};
+    		const cost = priceMap[c];
+
+    		// 2. 이미 보유 중인지 체크 (통합 체크)
+    		const ownedMap = { red: hasRelicRed, blue: hasRelicBlue, green: hasRelicGreen, yellow: hasRelicYellow };
+    		if (ownedMap[c]) {
+        		return alert("이미 보유 중인 유물입니다!");
     		}
 
+    		// 3. 구매 처리
     		if (money >= cost) {
         		money -= cost;
+
+        		// 선택한 유물 활성화
         		if (c === 'red') hasRelicRed = true;
-        		if (c === 'blue') hasRelicBlue = true;
-        		if (c === 'green') hasRelicGreen = true;
-        		if (c === 'yellow') hasRelicYellow = true;
-        		saveGameData(); updateUI(); alert("전설 유물을 획득했습니다!");
-    		} else alert("돈 부족!");
+        		else if (c === 'blue') hasRelicBlue = true;
+        		else if (c === 'green') hasRelicGreen = true;
+        		else if (c === 'yellow') hasRelicYellow = true;
+
+        		alert(`✨ [${c.toUpperCase()}] 유물을 획득했습니다! 효과가 즉시 적용됩니다.`);
+        
+        		updateUI();      // 돈과 버튼 상태 업데이트
+        		saveGameData();  // 즉시 저장
+    		} else {
+        		alert(`돈이 부족합니다! (필요 금액: ${formatMoney(cost)})`);
+    		}
 	}
 
         async function buyEnding() {
