@@ -141,9 +141,9 @@
         let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
 
         const characterData = [
-            { id: 0, damage: 10, cooldown: 1.0, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
-            { id: 1, damage: 30, cooldown: 1.5, price: 2500, idleImg: "char2_idle.png", attackImg: "char2_attack.png" },
-            { id: 2, damage: 100, cooldown: 2.0, price: 5000, idleImg: "char3_idle.png", attackImg: "char3_attack.png" }
+            { id: 0, damage: 10, cooldown: 0.5, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
+            { id: 1, damage: 100, cooldown: 1, price: 5000, idleImg: "char2_idle.png", attackImg: "char2_attack.png" },
+            { id: 2, damage: 1000, cooldown: 1.5, price: 10000, idleImg: "char3_idle.png", attackImg: "char3_attack.png" }
         ];
         let activeCharacters = [], savedCharactersList = [];
 
@@ -245,13 +245,28 @@
 
         function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
         function buyItem(t) { if(money>=5000){ money-=5000; t==='red'?redPotionTime+=60:bluePotionTime+=60; updateUI(); } else alert("돈 부족!"); }
-        function buyRelic(c) {
-            let cost = c==='red'?20000:(c==='blue'?30000:50000);
-            if(money>=cost) {
-                money-=cost; if(c==='red')hasRelicRed=true; if(c==='blue')hasRelicBlue=true; if(c==='green')hasRelicGreen=true;
-                saveGameData(); updateUI();
-            } else alert("돈 부족!");
-        }
+	function buyRelic(c) {
+   		let cost = c === 'red' ? 20000 : (c === 'blue' ? 30000 : 50000);
+
+    		// 🌟 1. 이미 보유 중인지 확인 (중복 구매 방지)
+    		if (c === 'red' && hasRelicRed) return alert("이미 보유한 유물입니다!");
+    		if (c === 'blue' && hasRelicBlue) return alert("이미 보유한 유물입니다!");
+   		if (c === 'green' && hasRelicGreen) return alert("이미 보유한 유물입니다!");
+
+    		// 2. 돈이 충분한지 확인 후 구매 진행
+    		if (money >= cost) {
+        		money -= cost;
+        		if (c === 'red') hasRelicRed = true;
+        		if (c === 'blue') hasRelicBlue = true;
+        		if (c === 'green') hasRelicGreen = true;
+        
+        		alert("유물을 성공적으로 획득했습니다!");
+        		saveGameData(); // 서버에 저장
+        		updateUI();     // 화면 갱신
+   		} else {
+        		alert("돈이 부족합니다!");
+   		}
+	}
 
         async function buyEnding() {
             if(money >= 10000000) {
