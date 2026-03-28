@@ -55,8 +55,14 @@
         
         .damage-text { position: absolute; color: #ff3300; font-weight: bold; font-size: 20px; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 200; }
         @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -2px); } 100% { transform: translate(0px, 0px); } }
-        .shake-active { animation: shake 0.1s ease-in-out; }
+        @keyframes shake { 
+		0% { margin-left: 1px; margin-top: 1px; } 
+    		50% { margin-left: -2px; margin-top: -2px; } 
+    		100% { margin-left: 0px; margin-top: 0px; }
+	}
+	.shake-active { 
+    		animation: shake 0.1s ease-in-out; 
+	}
 
         @media screen and (max-height: 500px) {
             #top-bar { height: 75px; padding: 5px; }
@@ -152,12 +158,29 @@
         ];
         let activeCharacters = [], savedCharactersList = [];
 
-        function resizeGame() {
-            if(!isGameRunning) return;
-            const board = document.getElementById("game-board");
-            const scale = Math.min(window.innerWidth / 820, (window.innerHeight - 180) / 460);
-            board.style.transform = scale < 1 ? `scale(${scale})` : "scale(1)";
-        }
+       function resizeGame() {
+		if(!isGameRunning) return;
+    		const board = document.getElementById("game-board");
+    		const wrapper = document.getElementById("game-wrapper");
+    
+    		// 상단바와 UI 박스의 높이를 제외한 실제 사용 가능한 높이 계산
+    		const topBarHeight = document.getElementById("top-bar").offsetHeight || 0;
+    		const uiBoxHeight = document.querySelector(".ui-box").offsetHeight || 0;
+   	 	const availableHeight = window.innerHeight - topBarHeight - uiBoxHeight - 20;
+    
+    		const scaleX = window.innerWidth / 820; 
+   		const scaleY = availableHeight / 460;
+    		const scale = Math.min(scaleX, scaleY);
+    
+    		if(scale < 1) {
+        		board.style.transform = `scale(${scale})`;
+        		// wrapper 높이도 스케일에 맞춰 조절해서 스크롤 방지
+        		wrapper.style.height = (450 * scale) + "px";
+    		} else {
+        		board.style.transform = "scale(1)";
+        		wrapper.style.height = "450px";
+    		}
+	}
         window.addEventListener('resize', resizeGame);
 
         async function attemptRegister() {
