@@ -173,13 +173,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. 변수 선언 (신규 유물 및 물약 효과 포함)
+	// [기본 상태]
 	let currentUser = "", isGameRunning = false, money = 1000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
 
-	// [포션 타이머] x2, x3, x5 단계별로 세분화
-	let p2Red = 0, p2Blue = 0, p2Gold = 0;   // 2배 (대미지, 공속, 골드)
-	let p3Red = 0, p3Blue = 0, p3Gold = 0;   // 3배 (대미지, 공속, 골드)
-	let p5Red = 0, p5Blue = 0, p5Gold = 0;   // 5배 (대미지, 공속, 골드)
+	// [포션 타이머] 반드시 0으로 초기화
+	let p2Red = 0, p2Blue = 0, p2Gold = 0;
+	let p3Red = 0, p3Blue = 0, p3Gold = 0;
+	let p5Red = 0, p5Blue = 0, p5Gold = 0;
 
 	// [유물 및 누적 데이터]
 	let hasRelicRed = false, hasRelicBlue = false, hasRelicGreen = false, hasRelicYellow = false;
@@ -254,34 +254,46 @@
 
         // 5. 데이터 저장/로드 (이 부분을 찾아서 통째로 교체하세요)
         async function loadGameData(id) {
-            const snap = await db.collection("saves").doc(id).get();
-            if(snap.exists) {
-                const s = snap.data();
-                money = s.money || 1000; 
-                wallMaxHp = s.wallMaxHp || 1000; 
-                wallHp = s.wallHp || 1000; 
-                wallLevel = s.wallLevel || 1;
-                playTimeSeconds = s.playTimeSeconds || 0;
-                
-                // 🌟 핵심 수정: 파이어베이스 에러 방지를 위해 기본값을 false로 설정!
-                hasRelicRed = s.hasRelicRed || false; 
-                hasRelicBlue = s.hasRelicBlue || false; 
-                hasRelicGreen = s.hasRelicGreen || false;
-                
-                savedCharactersList = s.savedCharactersList || [];
-                document.getElementById("characters-container").innerHTML = ""; activeCharacters = [];
-                savedCharactersList.forEach(cId => spawnCharacterWithoutCost(cId));
-            }
-        }
+    		const snap = await db.collection("saves").doc(id).get();
+    		if(snap.exists) {
+        		const s = snap.data();
+        		// 기본 정보
+        		money = s.money || 1000; 
+        		wallMaxHp = s.wallMaxHp || 1000; 
+        		wallHp = s.wallHp || 1000; 
+        		wallLevel = s.wallLevel || 1;
+        		playTimeSeconds = s.playTimeSeconds || 0;
+        
+        		// 유물 정보 (값이 없으면 false)
+        		hasRelicRed = s.hasRelicRed || false; 
+        		hasRelicBlue = s.hasRelicBlue || false; 
+        		hasRelicGreen = s.hasRelicGreen || false;
+        		hasRelicYellow = s.hasRelicYellow || false;
+        		cumulativeGoldMult = s.cumulativeGoldMult || 1.0;
+
+        		// 🌟 중요: 새 물약 타이머 로드
+        		p2Red = s.p2Red || 0; p2Blue = s.p2Blue || 0; p2Gold = s.p2Gold || 0;
+        		p3Red = s.p3Red || 0; p3Blue = s.p3Blue || 0; p3Gold = s.p3Gold || 0;
+        		p5Red = s.p5Red || 0; p5Blue = s.p5Blue || 0; p5Gold = s.p5Gold || 0;
+        
+        		// 캐릭터 복구
+        		savedCharactersList = s.savedCharactersList || [];
+        		document.getElementById("characters-container").innerHTML = ""; 
+        		activeCharacters = [];
+        		savedCharactersList.forEach(cId => spawnCharacterWithoutCost(cId));
+
+        		console.log("데이터 로드 완료!");
+    		}
+	}
 
 	function saveGameData() {
     		if(!currentUser || !isGameRunning) return;
     		db.collection("saves").doc(currentUser).set({
         		money, wallMaxHp, wallHp, wallLevel, playTimeSeconds,
         		hasRelicRed, hasRelicBlue, hasRelicGreen, hasRelicYellow, cumulativeGoldMult,
-        		p2Red, p2Blue, p2Gold, p3Red, p3Blue, p3Gold, p5Red, p5Blue, p5Gold, // 물약 추가
+        		p2Red, p2Blue, p2Gold, p3Red, p3Blue, p3Gold, p5Red, p5Blue, p5Gold, 
         		savedCharactersList
-    		}).catch(e => console.error(e));
+    		}).then(() => console.log("자동 저장됨")).catch(e => console.error(e));
 	}
 
         // 6. 랭킹 시스템
