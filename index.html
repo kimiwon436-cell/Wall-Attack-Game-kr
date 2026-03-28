@@ -284,26 +284,34 @@
 
 	// 7. 게임 로직
 	function spawnCharacterWithoutCost(id) {
-    		// 1. 데이터 가져오기 및 엘리먼트 생성
+    		// 1. 캐릭터 데이터 가져오기 (데이터가 없으면 중단)
     		const data = characterData[id];
-    		const img = document.createElement("img"); 
-    		img.className = "character"; 
+    		if (!data) return;
+
+   	 	// 2. 이미지 엘리먼트 생성 및 설정
+    		const img = document.createElement("img");
+    		img.className = "character";
     		img.src = data.idleImg;
 
-    		// 2. [추가된 기능] X 좌표 분산: 캐릭터가 추가될수록 왼쪽으로 70px씩 배치
-   		// 벽(오른쪽)에서 250px 떨어진 곳부터 시작합니다.
-    		const xPos = 250 + (activeCharacters.length * 70);
+    		// 3. X, Y 좌표 설정 (캐릭터 간격 벌리기)
+    		// 현재 배치된 캐릭터 수에 따라 왼쪽으로 70px씩 이동
+    		const charIndex = activeCharacters.length;
+    		const xPos = 250 + (charIndex * 70); 
+    		const yPos = 40 + (Math.random() * 30); // 위아래로 약간의 변화
+
     		img.style.right = xPos + "px";
+    		img.style.bottom = yPos + "px";
 
-    		// 3. [추가된 기능] Y 좌표 분산: 40~70px 사이에서 살짝씩 다르게 배치 (입체감)
-    		const yPos = 40 + (Math.random() * 30);
-   		img.style.bottom = yPos + "px";
+    		// 4. 화면에 캐릭터 추가
+   		document.getElementById("characters-container").appendChild(img);
 
-    		// 4. 화면(DOM)에 추가
-    		document.getElementById("characters-container").appendChild(img);
-
-   		// 5. 게임 데이터 배열에 추가 (데미지 계산 및 공격 타이머용)
-    		activeCharacters.push({ element: img, data, timer: 0 });
+    		// 5. [중요] 공격 루프에서 사용할 데이터 객체 추가
+    		// 이 형식이 정확해야 setInterval에서 공격을 인식합니다.
+    		activeCharacters.push({
+        		element: img,
+        		data: data,   // 공격력, 쿨타임 데이터
+        		timer: 0      // 공격 타이머 초기화
+    		});
 	}
 
         function buyCharacter(id) {
