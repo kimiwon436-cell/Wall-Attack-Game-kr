@@ -96,7 +96,12 @@
         <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사 💰5,000</p></div>
     </div>
 
-    <div class="ui-box">💰 돈: <span id="money">1000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span><div id="buff-status"></div></div>
+    <div class="ui-box">
+	💰 돈: <span id="money">1000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
+    
+	<button class="btn-secondary" style="float: right; font-size: 14px; padding: 5px 10px;" onclick="viewRanking()">🏆 랭킹 보기</button>
+    	<div id="buff-status"></div>
+    </div>
 
     <div id="game-wrapper">
         <div id="game-board">
@@ -205,7 +210,36 @@
                 savedCharactersList.forEach(cId => spawnCharacterWithoutCost(cId));
             }
         }
+	
+	// 🌟 추가할 함수: 현재 랭킹만 보기
+	async function viewRanking() {
+    		const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
+    		const list = document.getElementById("leaderboard-list"); 
+    		list.innerHTML = "";
+   		let r = 1; 
+    		snap.forEach(doc => { 
+        		let d = doc.data();
+        		list.innerHTML += `<li>${r++}등 - ${d.username} (${formatTime(d.time)})</li>`; 
+    		});
 
+    		// 엔딩 화면의 타이틀을 "전체 랭킹"으로 임시 변경해서 보여줌
+    		document.querySelector("#ending-screen h1").innerText = "🏆 전체 랭킹 (Top 100)";
+    		document.getElementById("clear-time-text").innerText = "실시간 순위입니다.";
+    
+    		// 다시 시작 버튼의 글자를 "닫기"로 변경
+    		const restartBtn = document.querySelector("#ending-screen .btn-primary");
+    		restartBtn.innerText = "✖ 닫기";
+    		restartBtn.onclick = function() { 
+        		document.getElementById("ending-screen").style.display = "none";
+        		// 원상복구
+        		document.querySelector("#ending-screen h1").innerText = "👑 GAME CLEAR 👑";
+        		restartBtn.innerText = "🔄 다시 시작하기";
+        		restartBtn.onclick = function() { location.reload(); };
+    		};
+
+    		document.getElementById("ending-screen").style.display = "flex";
+	}
+	
         function saveGameData() {
             if(!currentUser || !isGameRunning) return;
             db.collection("saves").doc(currentUser).set({
