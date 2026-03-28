@@ -133,15 +133,23 @@
                 <p>배수: <span id="current-multiplier">1.0</span>배</p>
             </div>
 
-            <div id="shop-modal">
-                <button class="close-btn" onclick="toggleShop(false)">X 닫기</button>
-                <h2>🛒 온라인 상점</h2>
-                <div class="shop-item" onclick="buyItem('red')">🍷 빨간 포션 (대미지 2배) - 💰5,000</div>
-                <div class="shop-item" onclick="buyItem('blue')">🧪 파란 포션 (공속 2배) - 💰5,000</div>
-		<div class="shop-item" id="relic-red" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 대미지) - 💰20,000</div>
-		<div class="shop-item" id="relic-blue" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 감소) - 💰30,000</div>
-		<div class="shop-item" id="relic-green" onclick="buyRelic('green')">🍀 초록 유물 (골드 2배) - 💰50,000</div>
-            </div>
+	  <div id="shop-modal">
+    		<button class="close-btn" onclick="toggleShop(false)">X 닫기</button>
+    		<h2>🛒 프리미엄 온라인 상점</h2>
+    
+    		<h3>🧪 강화 물약</h3>
+    		<div class="shop-item" onclick="buyItem('red')">🍷 빨간 포션 (대미지 2배) - 💰1만</div>
+    		<div class="shop-item" onclick="buyItem('blue')">🧪 파란 포션 (공속 2배) - 💰1만</div>
+    		<div class="shop-item" onclick="buyItem('gold')">💰 황금 포션 (골드 2배) - 💰5만</div>
+    		<div class="shop-item" onclick="buyItem('triple')">⚡ 트립플 포션 (전부 3배) - 💰50만</div>
+    		<div class="shop-item" onclick="buyItem('penta')">🔥 펜타 포션 (전부 5배) - 💰200만</div>
+
+    		<h3>✨ 전설의 유물</h3>
+    		<div class="shop-item" id="relic-red" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 체력 0.1% 감소) - 💰5,000만</div>
+    		<div class="shop-item" id="relic-blue" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 10% 감소) - 💰1억</div>
+    		<div class="shop-item" id="relic-green" onclick="buyRelic('green')">🍀 초록 유물 (기본 골드 2배) - 💰5억</div>
+    		<div class="shop-item" id="relic-yellow" onclick="buyRelic('yellow')">👑 황금 유물 (타격 시 골드 0.05% 영구 누적 증가) - 💰10억</div>
+	  </div>
         </div>
     </div>
 
@@ -159,10 +167,27 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // 2. 변수 선언
-        let currentUser = "", isGameRunning = false, money = 1000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
-        let redPotionTime = 0, bluePotionTime = 0, hasRelicRed = false, hasRelicBlue = false, hasRelicGreen = false;
-        let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
+        // 2. 변수 선언 (신규 유물 및 물약 효과 포함)
+	let currentUser = "", isGameRunning = false, money = 1000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
+
+	// [포션 타이머] 기존 2개에서 5개로 확장
+	let redPotionTime = 0;    // 대미지 2배
+	let bluePotionTime = 0;   // 공속 2배
+	let goldPotionTime = 0;   // 골드 2배
+	let triplePotionTime = 0; // 올스탯 3배
+	let pentaPotionTime = 0;  // 올스탯 5배
+
+	// [유물 보유 여부] 황금 유물(Yellow) 추가
+	let hasRelicRed = false;    // 초당 대미지
+	let hasRelicBlue = false;   // 시작 HP 감소
+	let hasRelicGreen = false;  // 기본 골드 2배
+	let hasRelicYellow = false; // 타격 시 골드 누적 증가 유물
+
+	// [누적 데이터] 황금 유물로 인해 쌓이는 골드 배수 (기본값 1.0 = 100%)
+	let cumulativeGoldMult = 1.0; 
+
+	// [이벤트 및 피버]
+	let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
 
         const characterData = [
             { id: 0, damage: 10, cooldown: 0.5, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
@@ -324,24 +349,37 @@
             } else alert("돈 부족!");
         }
 
-        function buyItem(type) {
-            if (money >= 5000) { money -= 5000; type === 'red' ? redPotionTime += 60 : bluePotionTime += 60; updateUI(); } 
-            else alert("돈 부족!");
-        }
+	function buyItem(type) {
+    		let prices = { red: 10000, blue: 10000, gold: 50000, triple: 500000, penta: 2000000 };
+    		if (money >= prices[type]) {
+        		money -= prices[type];
+        		if (type === 'red') redPotionTime += 60;
+        		else if (type === 'blue') bluePotionTime += 60;
+        		else if (type === 'gold') goldPotionTime += 60;
+        		else if (type === 'triple') triplePotionTime += 60;
+        		else if (type === 'penta') pentaPotionTime += 60;
+        		updateUI();
+    		} else alert("돈 부족!");
+	}
 
-        function buyRelic(c) {
-            let cost = c === 'red' ? 20000 : (c === 'blue' ? 30000 : 50000);
-            if (c === 'red' && hasRelicRed) return alert("이미 보유 중!");
-            if (c === 'blue' && hasRelicBlue) return alert("이미 보유 중!");
-            if (c === 'green' && hasRelicGreen) return alert("이미 보유 중!");
-            if (money >= cost) {
-                money -= cost;
-                if (c === 'red') hasRelicRed = true;
-                if (c === 'blue') hasRelicBlue = true;
-                if (c === 'green') hasRelicGreen = true;
-                saveGameData(); updateUI(); alert("유물 획득!");
-            } else alert("돈 부족!");
-        }
+	function buyRelic(c) {
+    		let priceMap = { red: 50000000, blue: 100000000, green: 500000000, yellow: 1000000000 };
+    		let cost = priceMap[c];
+    
+    		if ((c === 'red' && hasRelicRed) || (c === 'blue' && hasRelicBlue) || 
+        		(c === 'green' && hasRelicGreen) || (c === 'yellow' && hasRelicYellow)) {
+        		return alert("이미 보유 중!");
+    		}
+
+    		if (money >= cost) {
+        		money -= cost;
+        		if (c === 'red') hasRelicRed = true;
+        		if (c === 'blue') hasRelicBlue = true;
+        		if (c === 'green') hasRelicGreen = true;
+        		if (c === 'yellow') hasRelicYellow = true;
+        		saveGameData(); updateUI(); alert("전설 유물을 획득했습니다!");
+    		} else alert("돈 부족!");
+	}
 
         async function buyEnding() {
             if(money >= 5000000000) {
@@ -425,39 +463,56 @@
         function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
 
         // 메인 루프
-        setInterval(() => {
-            if(!isGameRunning) return;
-            let dt = 0.1; playTimeSeconds += dt;
-            if(redPotionTime > 0) redPotionTime -= dt;
-            if(bluePotionTime > 0) bluePotionTime -= dt;
-            if(feverActiveTime > 0) { feverActiveTime -= dt; if(feverActiveTime <= 0) feverMultiplier = 1.0; }
-            if(hasRelicRed) wallHp -= (wallMaxHp * 0.001);
+	setInterval(() => {
+    		if(!isGameRunning) return;
+    		let dt = 0.1; playTimeSeconds += dt;
 
-            activeCharacters.forEach(c => {
-                c.timer += dt;
-                let spd = (bluePotionTime > 0 ? 2 : 1) * feverMultiplier;
-                if(c.timer >= (c.data.cooldown / spd)) {
-                    c.timer = 0;
-                    let dmg = c.data.damage * (redPotionTime > 0 ? 2 : 1) * feverMultiplier;
-                    wallHp -= dmg; let earned = (hasRelicGreen ? dmg * 2 : dmg); money += earned;
-                    showFloatingText(dmg, earned, c.element);
-                    c.element.src = c.data.attackImg; setTimeout(() => c.element.src = c.data.idleImg, 150);
-                    // 흔들림 효과 추가
-                    document.getElementById("game-board").classList.add("shake-active");
-                    setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
-                }
-            });
-            if(wallHp <= 0) { wallLevel++; wallMaxHp *= 2; wallHp = hasRelicBlue ? wallMaxHp * 0.9 : wallMaxHp; money += wallLevel * 1000; }
-            updateUI();
-        }, 100);
+    		// 물약 타이머 감소
+    		if(redPotionTime > 0) redPotionTime -= dt;
+    		if(bluePotionTime > 0) bluePotionTime -= dt;
+    		if(goldPotionTime > 0) goldPotionTime -= dt;
+    		if(triplePotionTime > 0) triplePotionTime -= dt;
+    		if(pentaPotionTime > 0) pentaPotionTime -= dt;
+    		if(feverActiveTime > 0) { feverActiveTime -= dt; if(feverActiveTime <= 0) feverMultiplier = 1.0; }
+    
+    		if(hasRelicRed) wallHp -= (wallMaxHp * 0.001);
 
-        setInterval(() => { if(isGameRunning) saveGameData(); }, 10000);
-        setInterval(() => { 
-            if(isGameRunning && !eventIsRunning && Math.random() < 0.1) { 
-                eventIsRunning=true; document.getElementById("event-popup").style.display="block"; 
-                setTimeout(()=>{document.getElementById("event-popup").style.display="none"; eventIsRunning=false; feverActiveTime=30;},10000); 
-            } 
-        }, 15000);
+   		activeCharacters.forEach(c => {
+        		c.timer += dt;
+        
+        		// 배수 계산 (중첩 적용)
+        		let totalDmgMult = (redPotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1);
+        		let totalSpdMult = (bluePotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1) * feverMultiplier;
+        		let totalGoldMult = (goldPotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1) * (hasRelicGreen ? 2 : 1) * cumulativeGoldMult;
+
+        		if(c.timer >= (c.data.cooldown / totalSpdMult)) {
+            			c.timer = 0;
+            			let dmg = c.data.damage * totalDmgMult;
+            			wallHp -= dmg;
+            
+            			let earned = dmg * totalGoldMult;
+            			money += earned;
+
+            			// 🌟 황금 유물 효과: 타격 시마다 골드 획득량 0.05% 누적 증가
+            			if(hasRelicYellow) {
+                			cumulativeGoldMult += 0.0005; 
+            			}
+
+           			showFloatingText(dmg, earned, c.element);
+            			c.element.src = c.data.attackImg; setTimeout(() => c.element.src = c.data.idleImg, 150);
+            			document.getElementById("game-board").classList.add("shake-active");
+            			setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
+        		}
+    		});
+    
+    		if(wallHp <= 0) { 
+        		wallLevel++; 
+        		wallMaxHp *= 2; 
+        		wallHp = hasRelicBlue ? wallMaxHp * 0.9 : wallMaxHp; 
+        		money += wallLevel * 1000; 
+    		}
+    		updateUI();
+	}, 100);
     </script>
 </body>
 </html>
