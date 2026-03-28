@@ -282,25 +282,28 @@
             document.getElementById("ending-screen").style.display = "flex";
         }
 
-        // 7. 게임 로직
-        function spawnCharacterWithoutCost(id) {
+	// 7. 게임 로직
+	function spawnCharacterWithoutCost(id) {
+    		// 1. 데이터 가져오기 및 엘리먼트 생성
     		const data = characterData[id];
-    		const img = document.createElement("img");
-    		img.className = "character";
+    		const img = document.createElement("img"); 
+    		img.className = "character"; 
     		img.src = data.idleImg;
 
-    		// 현재 배치된 캐릭터 수를 기준으로 X 좌표 결정 (간격 70px)
-    		// 벽(오른쪽)에서부터 250px 떨어진 지점에서 시작해 캐릭터가 늘어날수록 왼쪽으로 배치됩니다.
-    		const charIndex = activeCharacters.length;
-    		const xPos = 250 + (charIndex * 70); 
+    		// 2. [추가된 기능] X 좌표 분산: 캐릭터가 추가될수록 왼쪽으로 70px씩 배치
+   		// 벽(오른쪽)에서 250px 떨어진 곳부터 시작합니다.
+    		const xPos = 250 + (activeCharacters.length * 70);
     		img.style.right = xPos + "px";
 
-    		// Y 좌표(높이)는 40px ~ 70px 사이에서 랜덤하게 결정 (살짝의 입체감 부여)
+    		// 3. [추가된 기능] Y 좌표 분산: 40~70px 사이에서 살짝씩 다르게 배치 (입체감)
     		const yPos = 40 + (Math.random() * 30);
-    		img.style.bottom = yPos + "px";
+   		img.style.bottom = yPos + "px";
 
-   		document.getElementById("characters-container").appendChild(img);
-    		tiveCharacters.push({ element: img, data, timer: 0 });
+    		// 4. 화면(DOM)에 추가
+    		document.getElementById("characters-container").appendChild(img);
+
+   		// 5. 게임 데이터 배열에 추가 (데미지 계산 및 공격 타이머용)
+    		activeCharacters.push({ element: img, data, timer: 0 });
 	}
 
         function buyCharacter(id) {
