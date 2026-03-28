@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>벽 부수기 온라인</title>
     <style>
+        body { 
+            font-family: 'Arial', sans-serif; text-align: center; background-color: #f0f0f0; margin: 0; overflow: hidden; 
+            touch-action: none; /* 🌟 모바일에서 공격 시 화면 확대 방지 */
+        }
+        
         /* 모바일 가로 모드 유도 */
         #landscape-warning { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#fff; z-index:9999; flex-direction:column; justify-content:center; align-items:center; font-size:24px; font-weight:bold; }
         @media screen and (orientation: portrait) { #landscape-warning { display: flex; } }
@@ -20,20 +25,20 @@
         .btn-secondary { background: #555; color: #fff; padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; margin: 5px; }
         
         #leaderboard-list { list-style: none; padding: 0; text-align: left; max-height: 200px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; }
-        #leaderboard-list li { padding: 5px 0; border-bottom: 1px solid #444; font-size: 16px; }
+        #leaderboard-list li { padding: 5px 0; border-bottom: 1px solid #444; font-size: 14px; }
 
         /* 상단 바 */
         #top-bar { display: none; overflow-x: auto; background-color: #333; padding: 10px; height: 90px; gap: 10px; align-items: center; white-space: nowrap; box-sizing: border-box; }
         .buy-card { background: white; border: 2px solid #ffd700; border-radius: 8px; padding: 5px 10px; cursor: pointer; min-width: 100px; text-align: center; color: black;}
         .buy-card img { width: 40px; height: 40px; object-fit: cover; mix-blend-mode: multiply; }
-        .buy-card p { margin: 5px 0 0 0; font-size: 13px; font-weight: bold; }
+        .buy-card p { margin: 5px 0 0 0; font-size: 11px; font-weight: bold; line-height: 1.2; }
         
         #ending-btn { background: linear-gradient(45deg, #ff00cc, #3333ff); color: white; border: 2px solid #fff; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         .ui-box { display: none; padding: 10px; font-size: 20px; font-weight: bold; text-align: left; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
         
-        /* 게임 화면 */
+        /* 게임 보드 */
         #game-wrapper { display: none; width: 100%; justify-content: center; overflow: hidden; height: 450px; }
         #game-board { background-color: #fff; width: 800px; height: 450px; position: relative; border: 4px solid #444; transform-origin: top center; overflow: hidden; box-sizing: border-box; }
         
@@ -42,7 +47,7 @@
         #wall-hp-text { color: white; margin-top: 100px; font-weight: bold; text-shadow: 1px 1px 2px black; font-size: 18px;}
         .character { width: 120px; height: 120px; position: absolute; bottom: 50px; object-fit: cover; mix-blend-mode: multiply; }
         
-        /* 상점 */
+        /* 상점 모달 */
         #shop-modal { display: none; position: absolute; top: 5%; left: 10%; width: 80%; height: 90%; background: rgba(0,0,0,0.9); color: white; border-radius: 15px; padding: 20px; z-index: 100; overflow-y: auto; text-align: left; }
         .close-btn { float: right; cursor: pointer; background: red; color: white; padding: 10px 15px; border: none; font-weight: bold; border-radius: 5px;}
         .shop-item { display: block; margin: 10px 0; border: 2px solid #fff; padding: 10px; background: #222; border-radius: 10px; cursor: pointer;}
@@ -51,8 +56,14 @@
         #event-popup { display: none; position: absolute; top: 5%; left: 50%; transform: translateX(-50%); background: #ffaa00; border: 4px solid #ff4400; border-radius: 15px; padding: 15px; width: 280px; text-align: center; z-index: 50; color: black;}
         #event-btn { background: red; color: white; border: 3px solid #800000; padding: 10px; font-size: 20px; font-weight: bold; cursor: pointer; border-radius: 50%; width: 80px; height: 80px; }
         
+        /* 대미지 텍스트 */
         .damage-text { position: absolute; color: #ff3300; font-weight: bold; font-size: 20px; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 200; }
         @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
+
+        /* 🌟 흔들림 효과 (margin 방식 - 화면 뻥튀기 방지) */
+        @keyframes shake { 0% { margin-left: 2px; margin-top: 2px; } 50% { margin-left: -2px; margin-top: -2px; } 100% { margin-left: 0px; margin-top: 0px; } }
+        .shake-active { animation: shake 0.1s ease-in-out; }
+
         @media screen and (max-height: 500px) {
             #top-bar { height: 75px; padding: 5px; }
             .buy-card { min-width: 90px; }
@@ -70,7 +81,7 @@
     <div id="login-screen">
         <div class="login-box">
             <h1 style="color: #ffd700;">벽 부수기 온라인</h1>
-            <input type="text" id="username" placeholder="닉네임 입력">
+            <input type="text" id="username" placeholder="아이디 입력">
             <input type="password" id="password" placeholder="비밀번호 입력">
             <br>
             <button class="btn-primary" onclick="attemptLogin()">로그인</button>
@@ -91,18 +102,17 @@
 
     <div id="top-bar">
         <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 10억</p></div>
-        <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>졸라맨 💰1,000</p></div>
-        <div class="buy-card" onclick="buyCharacter(1)"><img src="char2_idle.png"><p>궁수 💰5,000</p></div>
-        <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사 💰10,000</p></div>
-        <div class="buy-card" onclick="buyCharacter(3)"><img src="char4_idle.png"><p>검사 💰50,000</p></div>
-        <div class="buy-card" onclick="buyCharacter(4)"><img src="char5_idle.png"><p>광전사 💰135,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>졸라맨<br>💰1,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(1)"><img src="char2_idle.png"><p>궁수<br>💰5,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사<br>💰10,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(3)"><img src="char4_idle.png"><p>검사<br>💰50,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(4)"><img src="char5_idle.png"><p>광전사<br>💰135,000</p></div>
     </div>
 
     <div class="ui-box">
-	💰 돈: <span id="money">1000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
-    
-	<button class="btn-secondary" style="float: right; font-size: 14px; padding: 5px 10px;" onclick="viewRanking()">🏆 랭킹 보기</button>
-    	<div id="buff-status"></div>
+        💰 돈: <span id="money">1000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
+        <button class="btn-secondary" style="float: right; font-size: 14px; padding: 5px 10px;" onclick="viewRanking()">🏆 랭킹 보기</button>
+        <div id="buff-status" style="color: red; font-size: 14px; margin-top: 5px;"></div>
     </div>
 
     <div id="game-wrapper">
@@ -123,14 +133,15 @@
                 <h2>🛒 온라인 상점</h2>
                 <div class="shop-item" onclick="buyItem('red')">🍷 빨간 포션 (대미지 2배) - 💰5,000</div>
                 <div class="shop-item" onclick="buyItem('blue')">🧪 파란 포션 (공속 2배) - 💰5,000</div>
-                <div class="shop-item" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 0.1% 대미지) - 💰20,000</div>
-                <div class="shop-item" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 10% 감소) - 💰30,000</div>
-                <div class="shop-item" onclick="buyRelic('green')">🍀 초록 유물 (돈 획득 2배) - 💰50,000</div>
+                <div class="shop-item" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 대미지) - 💰20,000</div>
+                <div class="shop-item" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 감소) - 💰30,000</div>
+                <div class="shop-item" onclick="buyRelic('green')">🍀 초록 유물 (골드 2배) - 💰50,000</div>
             </div>
         </div>
     </div>
 
     <script>
+        // 1. 파이어베이스 설정
         const firebaseConfig = {
             apiKey: "AIzaSyCEIIFRjz7oqyaD2fUE6aNZdx2WSTr5npI",
             authDomain: "wall-attack-game.firebaseapp.com",
@@ -143,54 +154,51 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // 2. 변수 선언
         let currentUser = "", isGameRunning = false, money = 1000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
         let redPotionTime = 0, bluePotionTime = 0, hasRelicRed = false, hasRelicBlue = false, hasRelicGreen = false;
         let feverMultiplier = 1.0, feverActiveTime = 0, eventIsRunning = false, clickCount = 0;
 
         const characterData = [
             { id: 0, damage: 10, cooldown: 0.5, price: 1000, idleImg: "char1_idle.png", attackImg: "char1_attack.png" },
-            { id: 1, damage: 100, cooldown: 1, price: 5000, idleImg: "char2_idle.png", attackImg: "char2_attack.png" },
+            { id: 1, damage: 100, cooldown: 1.0, price: 5000, idleImg: "char2_idle.png", attackImg: "char2_attack.png" },
             { id: 2, damage: 1000, cooldown: 1.5, price: 10000, idleImg: "char3_idle.png", attackImg: "char3_attack.png" },
             { id: 3, damage: 5500, cooldown: 0.5, price: 50000, idleImg: "char4_idle.png", attackImg: "char4_attack.png" },
-            { id: 4, damage: 11500, cooldown: 0.4, price: 135000, idleImg: "char5_idle.png", attackImg: "char5_attack.png" },
+            { id: 4, damage: 11500, cooldown: 0.4, price: 135000, idleImg: "char5_idle.png", attackImg: "char5_attack.png" }
         ];
         let activeCharacters = [], savedCharactersList = [];
 
-       function resizeGame() {
-		if(!isGameRunning) return;
-    		const board = document.getElementById("game-board");
-    		const wrapper = document.getElementById("game-wrapper");
-    
-    		// 상단바와 UI 박스의 높이를 제외한 실제 사용 가능한 높이 계산
-    		const topBarHeight = document.getElementById("top-bar").offsetHeight || 0;
-    		const uiBoxHeight = document.querySelector(".ui-box").offsetHeight || 0;
-   	 	const availableHeight = window.innerHeight - topBarHeight - uiBoxHeight - 20;
-    
-    		const scaleX = window.innerWidth / 820; 
-   		const scaleY = availableHeight / 460;
-    		const scale = Math.min(scaleX, scaleY);
-    
-    		if(scale < 1) {
-        		board.style.transform = `scale(${scale})`;
-        		// wrapper 높이도 스케일에 맞춰 조절해서 스크롤 방지
-        		wrapper.style.height = (450 * scale) + "px";
-    		} else {
-        		board.style.transform = "scale(1)";
-        		wrapper.style.height = "450px";
-    		}
-	}
+        // 3. 화면 리사이즈
+        function resizeGame() {
+            if(!isGameRunning) return;
+            const board = document.getElementById("game-board");
+            const wrapper = document.getElementById("game-wrapper");
+            const topBarHeight = document.getElementById("top-bar").offsetHeight || 0;
+            const uiBoxHeight = document.querySelector(".ui-box").offsetHeight || 0;
+            const availableHeight = window.innerHeight - topBarHeight - uiBoxHeight - 20;
+            const scale = Math.min(window.innerWidth / 820, availableHeight / 460);
+            if(scale < 1) {
+                board.style.transform = `scale(${scale})`;
+                wrapper.style.height = (450 * scale) + "px";
+            } else {
+                board.style.transform = "scale(1)";
+                wrapper.style.height = "450px";
+            }
+        }
         window.addEventListener('resize', resizeGame);
 
+        // 4. 인증 (가입/로그인)
         async function attemptRegister() {
             let id = document.getElementById("username").value.trim(), pw = document.getElementById("password").value.trim();
             if(!id || !pw) return alert("아이디와 비밀번호를 입력하세요.");
             const userRef = db.collection("users").doc(id);
             if((await userRef.get()).exists) return alert("이미 존재하는 아이디입니다.");
-            await userRef.set({ password: pw }); alert("회원가입 성공! 로그인을 진행하세요.");
+            await userRef.set({ password: pw }); alert("가입 성공! 로그인 하세요.");
         }
 
         async function attemptLogin() {
             let id = document.getElementById("username").value.trim(), pw = document.getElementById("password").value.trim();
+            if(!id || !pw) return alert("입력하세요.");
             const snap = await db.collection("users").doc(id).get();
             if(snap.exists && snap.data().password === pw) {
                 currentUser = id; await loadGameData(id);
@@ -199,9 +207,10 @@
                 document.getElementById("game-wrapper").style.display = "flex";
                 document.querySelector(".ui-box").style.display = "block";
                 isGameRunning = true; resizeGame(); updateUI();
-            } else alert("아이디 또는 비밀번호가 틀렸습니다.");
+            } else alert("정보가 틀렸습니다.");
         }
 
+        // 5. 데이터 저장/로드
         async function loadGameData(id) {
             const snap = await db.collection("saves").doc(id).get();
             if(snap.exists) {
@@ -214,44 +223,32 @@
                 savedCharactersList.forEach(cId => spawnCharacterWithoutCost(cId));
             }
         }
-	
-	// 🌟 추가할 함수: 현재 랭킹만 보기
-	async function viewRanking() {
-    		const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
-    		const list = document.getElementById("leaderboard-list"); 
-    		list.innerHTML = "";
-   		let r = 1; 
-    		snap.forEach(doc => { 
-        		let d = doc.data();
-        		list.innerHTML += `<li>${r++}등 - ${d.username} (${formatTime(d.time)})</li>`; 
-    		});
 
-    		// 엔딩 화면의 타이틀을 "전체 랭킹"으로 임시 변경해서 보여줌
-    		document.querySelector("#ending-screen h1").innerText = "🏆 전체 랭킹 (Top 100)";
-    		document.getElementById("clear-time-text").innerText = "실시간 순위입니다.";
-    
-    		// 다시 시작 버튼의 글자를 "닫기"로 변경
-    		const restartBtn = document.querySelector("#ending-screen .btn-primary");
-    		restartBtn.innerText = "✖ 닫기";
-    		restartBtn.onclick = function() { 
-        		document.getElementById("ending-screen").style.display = "none";
-        		// 원상복구
-        		document.querySelector("#ending-screen h1").innerText = "👑 GAME CLEAR 👑";
-        		restartBtn.innerText = "🔄 다시 시작하기";
-        		restartBtn.onclick = function() { location.reload(); };
-    		};
-
-    		document.getElementById("ending-screen").style.display = "flex";
-	}
-	
         function saveGameData() {
             if(!currentUser || !isGameRunning) return;
             db.collection("saves").doc(currentUser).set({
                 money, wallMaxHp, wallHp, wallLevel, playTimeSeconds,
                 hasRelicRed, hasRelicBlue, hasRelicGreen, savedCharactersList
-            });
+            }).catch(e => console.error(e));
         }
 
+        // 6. 랭킹 시스템
+        async function viewRanking() {
+            const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
+            const list = document.getElementById("leaderboard-list"); list.innerHTML = "";
+            let r = 1; 
+            snap.forEach(doc => { 
+                let d = doc.data();
+                list.innerHTML += `<li>${r++}등 - ${d.username} (${formatTime(d.time)})</li>`; 
+            });
+            document.querySelector("#ending-screen h1").innerText = "🏆 실시간 랭킹 (Top 100)";
+            const restartBtn = document.querySelector("#ending-screen .btn-primary");
+            restartBtn.innerText = "✖ 닫기";
+            restartBtn.onclick = () => document.getElementById("ending-screen").style.display = "none";
+            document.getElementById("ending-screen").style.display = "flex";
+        }
+
+        // 7. 게임 로직
         function spawnCharacterWithoutCost(id) {
             const data = characterData[id];
             const img = document.createElement("img"); img.className = "character"; img.src = data.idleImg;
@@ -267,54 +264,32 @@
             } else alert("돈 부족!");
         }
 
-        function formatMoney(n) { return n >= 10000 ? (n/10000).toFixed(1)+"만" : Math.floor(n).toLocaleString(); }
-        function formatTime(s) { let m=Math.floor(s/60); let sec=Math.floor(s%60); return `${m < 10 ? '0'+m : m}:${sec < 10 ? '0'+sec : sec}`; }
-
-        function updateUI() {
-            document.getElementById("money").innerText = formatMoney(money);
-            document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
-            document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
-            let bText = "";
-            if(redPotionTime > 0) bText += `[대미지 2배: ${Math.ceil(redPotionTime)}s] `;
-            if(bluePotionTime > 0) bText += `[공속 2배: ${Math.ceil(bluePotionTime)}s] `;
-            if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
-            document.getElementById("buff-status").innerText = bText;
+        function buyItem(type) {
+            if (money >= 5000) { money -= 5000; type === 'red' ? redPotionTime += 60 : bluePotionTime += 60; updateUI(); } 
+            else alert("돈 부족!");
         }
 
-        function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
-        function buyItem(t) { if(money>=5000){ money-=5000; t==='red'?redPotionTime+=60:bluePotionTime+=60; updateUI(); } else alert("돈 부족!"); }
-	function buyRelic(c) {
-   		let cost = c === 'red' ? 20000 : (c === 'blue' ? 30000 : 50000);
-
-    		// 🌟 1. 이미 보유 중인지 확인 (중복 구매 방지)
-    		if (c === 'red' && hasRelicRed) return alert("이미 보유한 유물입니다!");
-    		if (c === 'blue' && hasRelicBlue) return alert("이미 보유한 유물입니다!");
-   		if (c === 'green' && hasRelicGreen) return alert("이미 보유한 유물입니다!");
-
-    		// 2. 돈이 충분한지 확인 후 구매 진행
-    		if (money >= cost) {
-        		money -= cost;
-        		if (c === 'red') hasRelicRed = true;
-        		if (c === 'blue') hasRelicBlue = true;
-        		if (c === 'green') hasRelicGreen = true;
-        
-        		alert("유물을 성공적으로 획득했습니다!");
-        		saveGameData(); // 서버에 저장
-        		updateUI();     // 화면 갱신
-   		} else {
-        		alert("돈이 부족합니다!");
-   		}
-	}
+        function buyRelic(c) {
+            let cost = c === 'red' ? 20000 : (c === 'blue' ? 30000 : 50000);
+            if (c === 'red' && hasRelicRed) return alert("이미 보유 중!");
+            if (c === 'blue' && hasRelicBlue) return alert("이미 보유 중!");
+            if (c === 'green' && hasRelicGreen) return alert("이미 보유 중!");
+            if (money >= cost) {
+                money -= cost;
+                if (c === 'red') hasRelicRed = true;
+                if (c === 'blue') hasRelicBlue = true;
+                if (c === 'green') hasRelicGreen = true;
+                saveGameData(); updateUI(); alert("유물 획득!");
+            } else alert("돈 부족!");
+        }
 
         async function buyEnding() {
             if(money >= 1000000000) {
                 isGameRunning = false;
                 await db.collection("leaderboard").add({ username: currentUser, time: playTimeSeconds });
-                const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
-                const list = document.getElementById("leaderboard-list"); list.innerHTML = "";
-                let r=1; snap.forEach(doc => { list.innerHTML += `<li>${r++}등: ${doc.data().username} (${formatTime(doc.data().time)})</li>`; });
-                document.getElementById("clear-time-text").innerText = `클리어 시간: ${formatTime(playTimeSeconds)}`;
-                document.getElementById("ending-screen").style.display = "flex";
+                viewRanking();
+                document.querySelector("#ending-screen h1").innerText = "👑 GAME CLEAR 👑";
+                document.getElementById("clear-time-text").innerText = `기록: ${formatTime(playTimeSeconds)}`;
                 await db.collection("saves").doc(currentUser).delete();
             } else alert("10억 원이 필요합니다!");
         }
@@ -334,6 +309,23 @@
             if(clickCount >= 20) { feverMultiplier += 0.5; clickCount=0; document.getElementById("current-multiplier").innerText = feverMultiplier.toFixed(1); }
         }
 
+        function formatMoney(n) { return n >= 100000000 ? (n/100000000).toFixed(2)+"억" : (n >= 10000 ? (n/10000).toFixed(1)+"만" : Math.floor(n).toLocaleString()); }
+        function formatTime(s) { let m=Math.floor(s/60); let sec=Math.floor(s%60); return `${m}:${sec<10?'0'+sec:sec}`; }
+
+        function updateUI() {
+            document.getElementById("money").innerText = formatMoney(money);
+            document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
+            document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
+            let bText = "";
+            if(redPotionTime > 0) bText += `[대미지 2배: ${Math.ceil(redPotionTime)}s] `;
+            if(bluePotionTime > 0) bText += `[공속 2배: ${Math.ceil(bluePotionTime)}s] `;
+            if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
+            document.getElementById("buff-status").innerText = bText;
+        }
+
+        function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
+
+        // 메인 루프
         setInterval(() => {
             if(!isGameRunning) return;
             let dt = 0.1; playTimeSeconds += dt;
@@ -351,6 +343,9 @@
                     wallHp -= dmg; let earned = (hasRelicGreen ? dmg * 2 : dmg); money += earned;
                     showFloatingText(dmg, earned, c.element);
                     c.element.src = c.data.attackImg; setTimeout(() => c.element.src = c.data.idleImg, 150);
+                    // 흔들림 효과 추가
+                    document.getElementById("game-board").classList.add("shake-active");
+                    setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
                 }
             });
             if(wallHp <= 0) { wallLevel++; wallMaxHp *= 2; wallHp = hasRelicBlue ? wallMaxHp * 0.9 : wallMaxHp; money += wallLevel * 1000; }
