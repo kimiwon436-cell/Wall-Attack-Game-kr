@@ -133,8 +133,6 @@
     <div class="ui-box">
         💰 돈: <span id="money">1000</span> 원
         &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
-        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="importSave()">📂 붙여넣기</button>
-        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="exportSave()">💾 코드 복사</button>
         <div id="buff-status"></div>
     </div>
 
@@ -292,30 +290,6 @@
                 savedCharactersList: savedCharactersList
             };
             localStorage.setItem('breaker_saves', JSON.stringify(dbSaves));
-        }
-
-        function exportSave() {
-            if(!currentUser) return;
-            saveGameData();
-            let code = btoa(encodeURIComponent(JSON.stringify(dbSaves[currentUser])));
-            prompt("아래 코드를 복사해서 다른 기기에 입력하세요:", code);
-        }
-
-        function importSave() {
-            if(!currentUser) return;
-            let code = prompt("복사해둔 저장 코드를 입력하세요:");
-            if(code) {
-                try {
-                    let parsed = JSON.parse(decodeURIComponent(atob(code)));
-                    dbSaves[currentUser] = parsed;
-                    localStorage.setItem('breaker_saves', JSON.stringify(dbSaves));
-                    loadGameData(currentUser);
-                    updateUI();
-                    alert("데이터를 성공적으로 불러왔습니다!");
-                } catch(e) {
-                    alert("잘못된 코드입니다.");
-                }
-            }
         }
 
         function formatMoney(num) {
