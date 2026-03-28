@@ -7,13 +7,12 @@
     <style>
         body { font-family: 'Arial', sans-serif; text-align: center; background-color: #f0f0f0; margin: 0; overflow: hidden; touch-action: manipulation; }
         
-        /* 모바일 가로 모드 유도 화면 */
+        /* 모바일 가로 모드 유도 (세로일 때만 뜸) */
         #landscape-warning { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#fff; z-index:9999; flex-direction:column; justify-content:center; align-items:center; font-size:24px; font-weight:bold; }
         @media screen and (orientation: portrait) {
             #landscape-warning { display: flex; }
         }
 
-        /* 로그인 및 엔딩 화면 */
         #login-screen, #ending-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); color: white; display: flex;
@@ -27,8 +26,8 @@
         #leaderboard-list { list-style: none; padding: 0; text-align: left; max-height: 200px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; }
         #leaderboard-list li { padding: 5px 0; border-bottom: 1px solid #444; font-size: 16px; }
 
-        /* 상단 바 */
-        #top-bar { display: none; overflow-x: auto; background-color: #333; padding: 10px; height: 90px; gap: 10px; align-items: center; white-space: nowrap; }
+        /* 상단 바 기본 스타일 */
+        #top-bar { display: none; overflow-x: auto; background-color: #333; padding: 10px; height: 90px; gap: 10px; align-items: center; white-space: nowrap; box-sizing: border-box; }
         .buy-card { background: white; border: 2px solid #ffd700; border-radius: 8px; padding: 5px 10px; cursor: pointer; min-width: 100px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: black;}
         .buy-card img { width: 40px; height: 40px; object-fit: cover; mix-blend-mode: multiply; }
         .buy-card p { margin: 5px 0 0 0; font-size: 13px; font-weight: bold; }
@@ -36,11 +35,11 @@
         #ending-btn { background: linear-gradient(45deg, #ff00cc, #3333ff); color: white; border: 2px solid #fff; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        .ui-box { display: none; padding: 10px; font-size: 20px; font-weight: bold; text-align: left; max-width: 800px; margin: 0 auto; }
+        .ui-box { display: none; padding: 10px; font-size: 20px; font-weight: bold; text-align: left; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
         
-        /* 🌟 모바일 대응을 위한 게임 보드 래퍼 */
-        #game-wrapper { display: none; width: 100%; justify-content: center; overflow: hidden; }
-        #game-board { background-color: #fff; width: 800px; height: 450px; position: relative; border: 4px solid #444; transform-origin: top center; overflow: hidden; }
+        /* 게임 보드 래퍼 */
+        #game-wrapper { display: none; width: 100%; display: flex; justify-content: center; overflow: hidden; height: 450px; }
+        #game-board { background-color: #fff; width: 800px; height: 450px; position: relative; border: 4px solid #444; transform-origin: top center; overflow: hidden; box-sizing: border-box; }
         
         #shop-btn { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); padding: 15px 10px; background-color: #ffd700; border: 3px solid #b8860b; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 10px; z-index: 10; }
 
@@ -49,6 +48,7 @@
         
         .character { width: 120px; height: 120px; position: absolute; bottom: 50px; object-fit: cover; object-position: center; mix-blend-mode: multiply; }
         
+        /* 상점 모달 */
         #shop-modal { display: none; position: absolute; top: 5%; left: 10%; width: 80%; height: 90%; background: rgba(0,0,0,0.9); color: white; border-radius: 15px; padding: 20px; box-sizing: border-box; z-index: 100; overflow-y: auto; text-align: left; }
         .close-btn { float: right; cursor: pointer; background: red; color: white; padding: 10px 15px; border: none; font-weight: bold; border-radius: 5px;}
         .shop-section { margin-bottom: 20px; border-bottom: 1px solid #555; padding-bottom: 10px; }
@@ -59,6 +59,7 @@
 
         #buff-status { color: red; font-weight: bold; font-size: 14px; margin-top: 5px; min-height: 20px;}
 
+        /* 이벤트 팝업 */
         #event-popup { display: none; position: absolute; top: 5%; left: 50%; transform: translateX(-50%); background: #ffaa00; border: 4px solid #ff4400; border-radius: 15px; padding: 15px; width: 280px; text-align: center; z-index: 50; box-shadow: 0 10px 20px rgba(0,0,0,0.5); color: black;}
         #event-btn { background: red; color: white; border: 3px solid #800000; padding: 10px; font-size: 20px; font-weight: bold; cursor: pointer; border-radius: 50%; width: 80px; height: 80px; margin: 10px auto; outline: none; transition: transform 0.1s; }
         #event-btn:active { transform: scale(0.9); }
@@ -70,6 +71,16 @@
         @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-50px) scale(1.3); opacity: 0; } }
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-2px, -2px) rotate(-1deg); } 50% { transform: translate(-3px, 0px) rotate(1deg); } 75% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(0px, 0px) rotate(0deg); } }
         .shake-active { animation: shake 0.1s ease-in-out; }
+
+        /* 🌟 모바일 가로 모드일 때 윗부분을 작게 줄여서 공간 확보 */
+        @media screen and (max-height: 500px) {
+            #top-bar { height: 75px; padding: 5px; }
+            .buy-card { min-width: 90px; padding: 5px; }
+            .buy-card img { width: 30px; height: 30px; }
+            .buy-card p { font-size: 11px; margin: 2px 0 0 0; }
+            .ui-box { padding: 5px; font-size: 16px; }
+            .ui-box button { font-size: 10px; padding: 3px 5px; }
+        }
     </style>
 </head>
 <body>
@@ -122,8 +133,8 @@
     <div class="ui-box">
         💰 돈: <span id="money">1000</span> 원
         &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
-        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="importSave()">📂 코드 붙여넣기</button>
-        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="exportSave()">💾 저장 코드 복사</button>
+        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="importSave()">📂 붙여넣기</button>
+        <button class="btn-secondary" style="font-size:12px; padding:5px 10px; float:right;" onclick="exportSave()">💾 코드 복사</button>
         <div id="buff-status"></div>
     </div>
 
@@ -186,20 +197,35 @@
         let activeCharacters = []; 
         let savedCharactersList = []; 
 
-        // 🌟 화면 리사이즈 (모바일 화면 자동 비율 맞춤)
+        // 🌟 모바일 화면에 맞춰 게임 화면을 완벽하게 축소시키는 로직
         function resizeGame() {
             if(!isGameRunning) return;
             const board = document.getElementById("game-board");
-            const scaleX = window.innerWidth / 820;
-            const scaleY = (window.innerHeight - 150) / 470;
+            const wrapper = document.getElementById("game-wrapper");
+            
+            // 화면에서 상단 버튼들과 글씨가 차지하는 높이 빼기
+            const topBarHeight = document.getElementById("top-bar").offsetHeight;
+            const uiBoxHeight = document.querySelector(".ui-box").offsetHeight;
+            const availableHeight = window.innerHeight - topBarHeight - uiBoxHeight - 10;
+            
+            // 800x450 크기의 원본 게임이 화면에 들어가려면 얼마나 줄여야 하는지 계산
+            const scaleX = window.innerWidth / 820; 
+            const scaleY = availableHeight / 460;
             const scale = Math.min(scaleX, scaleY);
+            
             if(scale < 1) {
                 board.style.transform = `scale(${scale})`;
+                // 축소된 만큼 껍데기(wrapper)의 높이도 딱 맞춰서 줄여줌 (스크롤 방지)
+                wrapper.style.height = (450 * scale) + "px";
             } else {
                 board.style.transform = "scale(1)";
+                wrapper.style.height = "450px";
             }
         }
-        window.addEventListener('resize', resizeGame);
+        
+        // 폰을 돌리거나 화면 크기가 바뀔 때 자동으로 리사이즈 실행
+        window.addEventListener('resize', () => { setTimeout(resizeGame, 100); });
+        window.addEventListener('orientationchange', () => { setTimeout(resizeGame, 100); });
 
         function attemptRegister() {
             let id = document.getElementById("username").value.trim();
@@ -233,7 +259,7 @@
             document.getElementById("game-wrapper").style.display = "flex";
             document.querySelector(".ui-box").style.display = "block";
             isGameRunning = true;
-            resizeGame();
+            resizeGame(); // 게임 시작 시 리사이즈 즉시 실행
             updateUI();
         }
 
@@ -268,7 +294,6 @@
             localStorage.setItem('breaker_saves', JSON.stringify(dbSaves));
         }
 
-        // 🌟 데이터 복사/붙여넣기 함수
         function exportSave() {
             if(!currentUser) return;
             saveGameData();
@@ -385,6 +410,7 @@
             document.getElementById("ending-screen").style.display = "none";
             loadGameData(currentUser); 
             isGameRunning = true;
+            resizeGame(); // 재시작할 때도 리사이즈 체크
         }
 
         function triggerFeverEvent() {
@@ -424,7 +450,11 @@
             floater.className = "damage-text";
             floater.innerHTML = `⚔️${Math.floor(dmg)}<br><span style="color:#ffd700; font-size:16px;">💰+${Math.floor(earned)}</span>`;
             let rect = element.getBoundingClientRect(); let boardRect = document.getElementById("game-board").getBoundingClientRect();
-            floater.style.left = (rect.left - boardRect.left + 30) + "px"; floater.style.top = (rect.top - boardRect.top - 20) + "px";
+            // 화면이 축소되었을 때를 대비해 스케일 비율 계산
+            const scale = boardRect.width / 800; 
+            floater.style.left = ((rect.left - boardRect.left) / scale + 30) + "px"; 
+            floater.style.top = ((rect.top - boardRect.top) / scale - 20) + "px";
+            
             document.getElementById("game-board").appendChild(floater);
             setTimeout(() => { floater.remove(); }, 1000);
         }
