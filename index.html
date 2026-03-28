@@ -101,13 +101,15 @@
     </div>
 
     <div id="top-bar">
-        <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 10억</p></div>
+        <div class="buy-card" id="ending-btn" onclick="buyEnding()"><p>👑 엔딩 보기<br>💰 50억</p></div>
         <div class="buy-card" onclick="buyCharacter(0)"><img src="char1_idle.png"><p>졸라맨<br>💰1,000</p></div>
         <div class="buy-card" onclick="buyCharacter(1)"><img src="char2_idle.png"><p>궁수<br>💰5,000</p></div>
         <div class="buy-card" onclick="buyCharacter(2)"><img src="char3_idle.png"><p>법사<br>💰10,000</p></div>
         <div class="buy-card" onclick="buyCharacter(3)"><img src="char4_idle.png"><p>검사<br>💰50,000</p></div>
         <div class="buy-card" onclick="buyCharacter(4)"><img src="char5_idle.png"><p>광전사<br>💰85,000</p></div>
         <div class="buy-card" onclick="buyCharacter(5)"><img src="char6_idle.png"><p>탱크<br>💰100,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(6)"><img src="char7_idle.png"><p>전투기<br>💰300,000</p></div>
+        <div class="buy-card" onclick="buyCharacter(7)"><img src="char8_idle.png"><p>미니 로켓 3개<br>💰500,000</p></div>
     </div>
 
     <div class="ui-box">
@@ -167,6 +169,8 @@
             { id: 3, damage: 5500, cooldown: 0.5, price: 50000, idleImg: "char4_idle.png", attackImg: "char4_attack.png" },
             { id: 4, damage: 11500, cooldown: 0.4, price: 85000, idleImg: "char5_idle.png", attackImg: "char5_attack.png" },
             { id: 5, damage: 35000, cooldown: 1.0, price: 100000, idleImg: "char6_idle.png", attackImg: "char6_attack.png" },
+            { id: 6, damage: 40000, cooldown: 0.5, price: 300000, idleImg: "char7_idle.png", attackImg: "char7_attack.png" },
+            { id: 7, damage: 135000, cooldown: 1, price: 500000, idleImg: "char8_idle.png", attackImg: "char8_attack.png" },
         ];
         let activeCharacters = [], savedCharactersList = [];
 
@@ -310,7 +314,7 @@
         }
 
         async function buyEnding() {
-            if(money >= 1000000000) {
+            if(money >= 5000000000) {
                 isGameRunning = false;
                 // 랭킹 등록
                 await db.collection("leaderboard").add({ username: currentUser, time: playTimeSeconds });
