@@ -55,15 +55,6 @@
         
         .damage-text { position: absolute; color: #ff3300; font-weight: bold; font-size: 20px; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 200; }
         @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-50px); opacity: 0; } }
-        @keyframes shake { 
-		0% { margin-left: 1px; margin-top: 1px; } 
-    		50% { margin-left: -2px; margin-top: -2px; } 
-    		100% { margin-left: 0px; margin-top: 0px; }
-	}
-	.shake-active { 
-    		animation: shake 0.1s ease-in-out; 
-	}
-
         @media screen and (max-height: 500px) {
             #top-bar { height: 75px; padding: 5px; }
             .buy-card { min-width: 90px; }
@@ -309,7 +300,6 @@
                     wallHp -= dmg; let earned = (hasRelicGreen ? dmg * 2 : dmg); money += earned;
                     showFloatingText(dmg, earned, c.element);
                     c.element.src = c.data.attackImg; setTimeout(() => c.element.src = c.data.idleImg, 150);
-                    document.getElementById("game-board").classList.add("shake-active"); setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
                 }
             });
             if(wallHp <= 0) { wallLevel++; wallMaxHp *= 2; wallHp = hasRelicBlue ? wallMaxHp * 0.9 : wallMaxHp; money += wallLevel * 1000; }
