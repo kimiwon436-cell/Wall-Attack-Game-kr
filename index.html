@@ -463,30 +463,36 @@
         function formatTime(s) { let m=Math.floor(s/60); let sec=Math.floor(s%60); return `${m}:${sec<10?'0'+sec:sec}`; }
 
         function updateUI() {
-            document.getElementById("money").innerText = formatMoney(money);
-            document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
-            document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
-            
-            let bText = "";
-            if(redPotionTime > 0) bText += `[대미지 2배: ${Math.ceil(redPotionTime)}s] `;
-            if(bluePotionTime > 0) bText += `[공속 2배: ${Math.ceil(bluePotionTime)}s] `;
-            if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
-            document.getElementById("buff-status").innerText = bText;
+    		document.getElementById("money").innerText = formatMoney(money);
+    		document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
+    		document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
+    
+    		// 버프 상태 텍스트 업데이트
+    		let bText = "";
+    		if(p2Red > 0 || p3Red > 0 || p5Red > 0) bText += `[⚔️대미지 UP] `;
+    		if(p2Blue > 0 || p3Blue > 0 || p5Blue > 0) bText += `[⚡공속 UP] `;
+    		if(p2Gold > 0 || p3Gold > 0 || p5Gold > 0) bText += `[💰골드 UP] `;
+    		if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
+    		document.getElementById("buff-status").innerText = bText;
 
-            // 🌟 유물을 샀을 경우 상점 버튼 디자인 업데이트
-            if(hasRelicRed) { 
-                let el = document.getElementById("relic-red");
-                if(el) { el.innerText = "🔥 붉은 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-            }
-            if(hasRelicBlue) { 
-                let el = document.getElementById("relic-blue");
-                if(el) { el.innerText = "❄️ 푸른 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-            }
-            if(hasRelicGreen) { 
-                let el = document.getElementById("relic-green");
-                if(el) { el.innerText = "🍀 초록 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
-            }
-        }
+    		// 유물 보유 시 버튼 디자인 업데이트
+    		if(hasRelicRed) { 
+        		let el = document.getElementById("relic-red");
+        		if(el) { el.innerText = "🔥 붉은 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+    		}
+    		if(hasRelicBlue) { 
+        		let el = document.getElementById("relic-blue");
+        		if(el) { el.innerText = "❄️ 푸른 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+    		}
+    		if(hasRelicGreen) { 
+        		let el = document.getElementById("relic-green");
+        		if(el) { el.innerText = "🍀 초록 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+    		}
+    		if(hasRelicYellow) { 
+        		let el = document.getElementById("relic-yellow");
+        		if(el) { el.innerText = "👑 황금 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+    		}
+	}
 
         function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
 
@@ -495,44 +501,55 @@
     		if(!isGameRunning) return;
     		let dt = 0.1; playTimeSeconds += dt;
 
-    		// 물약 타이머 감소
-    		if(redPotionTime > 0) redPotionTime -= dt;
-    		if(bluePotionTime > 0) bluePotionTime -= dt;
-    		if(goldPotionTime > 0) goldPotionTime -= dt;
-    		if(triplePotionTime > 0) triplePotionTime -= dt;
-    		if(pentaPotionTime > 0) pentaPotionTime -= dt;
-    		if(feverActiveTime > 0) { feverActiveTime -= dt; if(feverActiveTime <= 0) feverMultiplier = 1.0; }
+    		// 1. 모든 물약 타이머 감소 (새 변수 이름 적용)
+    		if(p2Red > 0) p2Red -= dt; if(p2Blue > 0) p2Blue -= dt; if(p2Gold > 0) p2Gold -= dt;
+    		if(p3Red > 0) p3Red -= dt; if(p3Blue > 0) p3Blue -= dt; if(p3Gold > 0) p3Gold -= dt;
+    		if(p5Red > 0) p5Red -= dt; if(p5Blue > 0) p5Blue -= dt; if(p5Gold > 0) p5Gold -= dt;
     
+    		if(feverActiveTime > 0) { 
+        		feverActiveTime -= dt; 
+        		if(feverActiveTime <= 0) feverMultiplier = 1.0; 
+    		}
+
+    		// 붉은 유물 효과 (초당 0.1% 대미지)
     		if(hasRelicRed) wallHp -= (wallMaxHp * 0.001);
 
-   		activeCharacters.forEach(c => {
+    		// 2. 캐릭터 공격 로직
+    		activeCharacters.forEach(c => {
         		c.timer += dt;
-        
-        		// 배수 계산 (중첩 적용)
-        		let totalDmgMult = (redPotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1);
-        		let totalSpdMult = (bluePotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1) * feverMultiplier;
-        		let totalGoldMult = (goldPotionTime > 0 ? 2 : 1) * (triplePotionTime > 0 ? 3 : 1) * (pentaPotionTime > 0 ? 5 : 1) * (hasRelicGreen ? 2 : 1) * cumulativeGoldMult;
 
+        		// 배수 계산 (2배, 3배, 5배 물약이 모두 있으면 곱연산으로 중첩됩니다)
+        		let totalDmgMult = (p2Red > 0 ? 2 : 1) * (p3Red > 0 ? 3 : 1) * (p5Red > 0 ? 5 : 1);
+        		let totalSpdMult = (p2Blue > 0 ? 2 : 1) * (p3Blue > 0 ? 3 : 1) * (p5Blue > 0 ? 5 : 1) * feverMultiplier;
+        		let totalGoldMult = (p2Gold > 0 ? 2 : 1) * (p3Gold > 0 ? 3 : 1) * (p5Gold > 0 ? 5 : 1) * (hasRelicGreen ? 2 : 1) * cumulativeGoldMult;
+
+        		// 공격 쿨타임 체크
         		if(c.timer >= (c.data.cooldown / totalSpdMult)) {
-            			c.timer = 0;
-            			let dmg = c.data.damage * totalDmgMult;
-            			wallHp -= dmg;
+            		c.timer = 0;
+            		let dmg = c.data.damage * totalDmgMult;
+            		wallHp -= dmg;
+
+            		let earned = dmg * totalGoldMult;
+            		money += earned;
+
+            		// 황금 유물 효과
+            		if(hasRelicYellow) {
+                		cumulativeGoldMult += 0.0005; 
+            		}
+
+            		showFloatingText(dmg, earned, c.element);
             
-            			let earned = dmg * totalGoldMult;
-            			money += earned;
-
-            			// 🌟 황금 유물 효과: 타격 시마다 골드 획득량 0.05% 누적 증가
-            			if(hasRelicYellow) {
-                			cumulativeGoldMult += 0.0005; 
-            			}
-
-           			showFloatingText(dmg, earned, c.element);
-            			c.element.src = c.data.attackImg; setTimeout(() => c.element.src = c.data.idleImg, 150);
-            			document.getElementById("game-board").classList.add("shake-active");
-            			setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
+            		// 공격 애니메이션
+            		c.element.src = c.data.attackImg; 
+            		setTimeout(() => { if(c.element) c.element.src = c.data.idleImg; }, 150);
+            
+            		// 화면 흔들림
+            		document.getElementById("game-board").classList.add("shake-active");
+            		setTimeout(() => document.getElementById("game-board").classList.remove("shake-active"), 100);
         		}
     		});
-    
+
+    		// 3. 벽 파괴 및 레벨업
     		if(wallHp <= 0) { 
         		wallLevel++; 
         		wallMaxHp *= 2; 
