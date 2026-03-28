@@ -134,9 +134,9 @@
                 <h2>🛒 온라인 상점</h2>
                 <div class="shop-item" onclick="buyItem('red')">🍷 빨간 포션 (대미지 2배) - 💰5,000</div>
                 <div class="shop-item" onclick="buyItem('blue')">🧪 파란 포션 (공속 2배) - 💰5,000</div>
-                <div class="shop-item" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 대미지) - 💰20,000</div>
-                <div class="shop-item" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 감소) - 💰30,000</div>
-                <div class="shop-item" onclick="buyRelic('green')">🍀 초록 유물 (골드 2배) - 💰50,000</div>
+		<div class="shop-item" id="relic-red" onclick="buyRelic('red')">🔥 붉은 유물 (1초당 대미지) - 💰20,000</div>
+		<div class="shop-item" id="relic-blue" onclick="buyRelic('blue')">❄️ 푸른 유물 (시작 HP 감소) - 💰30,000</div>
+		<div class="shop-item" id="relic-green" onclick="buyRelic('green')">🍀 초록 유물 (골드 2배) - 💰50,000</div>
             </div>
         </div>
     </div>
@@ -198,6 +198,14 @@
             await userRef.set({ password: pw }); alert("가입 성공! 로그인 하세요.");
         }
 
+	// attemptLogin 함수 바로 아래나 <script> 태그 끝나기 직전에 넣는 것을 추천합니다.
+	document.getElementById("password").addEventListener("keydown", (e) => {
+   		// e.isComposing은 한글 입력 시 중복 실행되는 버그를 방지해줍니다.
+   		if (e.key === "Enter" && !e.isComposing) {
+        		attemptLogin();
+    		}
+	});
+
         async function attemptLogin() {
             let id = document.getElementById("username").value.trim(), pw = document.getElementById("password").value.trim();
             if(!id || !pw) return alert("입력하세요.");
@@ -212,14 +220,22 @@
             } else alert("정보가 틀렸습니다.");
         }
 
-        // 5. 데이터 저장/로드
+        // 5. 데이터 저장/로드 (이 부분을 찾아서 통째로 교체하세요)
         async function loadGameData(id) {
             const snap = await db.collection("saves").doc(id).get();
             if(snap.exists) {
                 const s = snap.data();
-                money = s.money; wallMaxHp = s.wallMaxHp; wallHp = s.wallHp; wallLevel = s.wallLevel;
+                money = s.money || 1000; 
+                wallMaxHp = s.wallMaxHp || 1000; 
+                wallHp = s.wallHp || 1000; 
+                wallLevel = s.wallLevel || 1;
                 playTimeSeconds = s.playTimeSeconds || 0;
-                hasRelicRed = s.hasRelicRed; hasRelicBlue = s.hasRelicBlue; hasRelicGreen = s.hasRelicGreen;
+                
+                // 🌟 핵심 수정: 파이어베이스 에러 방지를 위해 기본값을 false로 설정!
+                hasRelicRed = s.hasRelicRed || false; 
+                hasRelicBlue = s.hasRelicBlue || false; 
+                hasRelicGreen = s.hasRelicGreen || false;
+                
                 savedCharactersList = s.savedCharactersList || [];
                 document.getElementById("characters-container").innerHTML = ""; activeCharacters = [];
                 savedCharactersList.forEach(cId => spawnCharacterWithoutCost(cId));
@@ -237,16 +253,24 @@
         // 6. 랭킹 시스템
         async function viewRanking() {
             const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
-            const list = document.getElementById("leaderboard-list"); list.innerHTML = "";
+            const list = document.getElementById("leaderboard-list"); 
+            list.innerHTML = "";
             let r = 1; 
             snap.forEach(doc => { 
                 let d = doc.data();
                 list.innerHTML += `<li>${r++}등 - ${d.username} (${formatTime(d.time)})</li>`; 
             });
+
+            // 랭킹 보기 모드일 때는 제목과 버튼을 변경
             document.querySelector("#ending-screen h1").innerText = "🏆 실시간 랭킹 (Top 100)";
-            const restartBtn = document.querySelector("#ending-screen .btn-primary");
-            restartBtn.innerText = "✖ 닫기";
-            restartBtn.onclick = () => document.getElementById("ending-screen").style.display = "none";
+            document.getElementById("clear-time-text").style.display = "none"; // 기록은 숨김
+            
+            const actionBtn = document.querySelector("#ending-screen .btn-primary");
+            actionBtn.innerText = "✖ 닫기";
+            actionBtn.onclick = () => {
+                document.getElementById("ending-screen").style.display = "none";
+            };
+            
             document.getElementById("ending-screen").style.display = "flex";
         }
 
@@ -288,12 +312,36 @@
         async function buyEnding() {
             if(money >= 1000000000) {
                 isGameRunning = false;
+                // 랭킹 등록
                 await db.collection("leaderboard").add({ username: currentUser, time: playTimeSeconds });
-                viewRanking();
+                
+                // 엔딩 화면 구성
                 document.querySelector("#ending-screen h1").innerText = "👑 GAME CLEAR 👑";
                 document.getElementById("clear-time-text").innerText = `기록: ${formatTime(playTimeSeconds)}`;
+                document.getElementById("clear-time-text").style.display = "block"; // 기록 표시
+                
+                // 버튼을 '다시 시작하기'로 초기화
+                const restartBtn = document.querySelector("#ending-screen .btn-primary");
+                restartBtn.innerText = "🔄 다시 시작하기";
+                restartBtn.onclick = () => location.reload(); 
+                
+                // 랭킹 리스트 불러오기
+                const snap = await db.collection("leaderboard").orderBy("time", "asc").limit(100).get();
+                const list = document.getElementById("leaderboard-list"); 
+                list.innerHTML = "";
+                let r = 1; 
+                snap.forEach(doc => { 
+                    let d = doc.data();
+                    list.innerHTML += `<li>${r++}등 - ${d.username} (${formatTime(d.time)})</li>`; 
+                });
+
+                document.getElementById("ending-screen").style.display = "flex";
+                
+                // 🌟 중요: 클리어 후 데이터 삭제 (처음부터 다시 하기 위해)
                 await db.collection("saves").doc(currentUser).delete();
-            } else alert("10억 원이 필요합니다!");
+            } else {
+                alert("10억 원이 필요합니다!");
+            }
         }
 
         function showFloatingText(dmg, earned, element) {
@@ -318,11 +366,26 @@
             document.getElementById("money").innerText = formatMoney(money);
             document.getElementById("wall-hp-text").innerText = `${formatMoney(wallHp)} / ${formatMoney(wallMaxHp)}`;
             document.getElementById("play-time").innerText = formatTime(playTimeSeconds);
+            
             let bText = "";
             if(redPotionTime > 0) bText += `[대미지 2배: ${Math.ceil(redPotionTime)}s] `;
             if(bluePotionTime > 0) bText += `[공속 2배: ${Math.ceil(bluePotionTime)}s] `;
             if(feverActiveTime > 0) bText += `[🔥피버: ${feverMultiplier}배]`;
             document.getElementById("buff-status").innerText = bText;
+
+            // 🌟 유물을 샀을 경우 상점 버튼 디자인 업데이트
+            if(hasRelicRed) { 
+                let el = document.getElementById("relic-red");
+                if(el) { el.innerText = "🔥 붉은 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+            }
+            if(hasRelicBlue) { 
+                let el = document.getElementById("relic-blue");
+                if(el) { el.innerText = "❄️ 푸른 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+            }
+            if(hasRelicGreen) { 
+                let el = document.getElementById("relic-green");
+                if(el) { el.innerText = "🍀 초록 유물 - [보유 중]"; el.style.opacity = "0.5"; el.style.pointerEvents = "none"; }
+            }
         }
 
         function toggleShop(s) { document.getElementById("shop-modal").style.display = s?"block":"none"; }
