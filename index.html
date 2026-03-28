@@ -282,35 +282,37 @@
             document.getElementById("ending-screen").style.display = "flex";
         }
 
-	// 7. 게임 로직
 	function spawnCharacterWithoutCost(id) {
-    		// 1. 캐릭터 데이터 가져오기 (데이터가 없으면 중단)
     		const data = characterData[id];
     		if (!data) return;
 
-   	 	// 2. 이미지 엘리먼트 생성 및 설정
     		const img = document.createElement("img");
     		img.className = "character";
     		img.src = data.idleImg;
 
-    		// 3. X, Y 좌표 설정 (캐릭터 간격 벌리기)
-    		// 현재 배치된 캐릭터 수에 따라 왼쪽으로 70px씩 이동
-    		const charIndex = activeCharacters.length;
-    		const xPos = 250 + (charIndex * 70); 
-    		const yPos = 40 + (Math.random() * 30); // 위아래로 약간의 변화
+    		// --- 배치 로직 수정 ---
+    		const index = activeCharacters.length;
+    
+    		// 한 줄에 8명씩 세우기 (8명이 넘어가면 윗줄로 이동)
+    		const column = index % 8; // 가로 순서 (0~7)
+    		const row = Math.floor(index / 8); // 세로 줄 (0: 아랫줄, 1: 윗줄...)
+
+    		// 간격은 50px로 촘촘하게, 벽(오른쪽)에서 220px 떨어진 곳부터 시작
+    		const xPos = 220 + (column * 10); 
+    
+    		// 줄마다 높이를 40px씩 차이 두기 + 약간의 랜덤 높이(10px)로 자연스럽게
+    		const yPos = 40 + (row * 40) + (Math.random() * 10);
 
     		img.style.right = xPos + "px";
     		img.style.bottom = yPos + "px";
+    		// -----------------------
 
-    		// 4. 화면에 캐릭터 추가
-   		document.getElementById("characters-container").appendChild(img);
+    		document.getElementById("characters-container").appendChild(img);
 
-    		// 5. [중요] 공격 루프에서 사용할 데이터 객체 추가
-    		// 이 형식이 정확해야 setInterval에서 공격을 인식합니다.
     		activeCharacters.push({
         		element: img,
-        		data: data,   // 공격력, 쿨타임 데이터
-        		timer: 0      // 공격 타이머 초기화
+        		data: data,
+        		timer: 0
     		});
 	}
 
