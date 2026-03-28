@@ -290,28 +290,29 @@
     		img.className = "character";
     		img.src = data.idleImg;
 
-    		// --- 배치 로직 수정 ---
     		const index = activeCharacters.length;
     
-    		// 한 줄에 8명씩 세우기 (8명이 넘어가면 윗줄로 이동)
-    		const column = index % 8; // 가로 순서 (0~7)
-    		const row = Math.floor(index / 8); // 세로 줄 (0: 아랫줄, 1: 윗줄...)
+    		// --- 최적화된 배치 설정 ---
+    		const perRow = 10; // 한 줄에 10명씩
+    		const column = index % perRow; 
+    		const row = Math.floor(index / perRow); 
 
-    		// 간격은 50px로 촘촘하게, 벽(오른쪽)에서 220px 떨어진 곳부터 시작
-    		const xPos = 220 + (column * 10); 
-    
-    		// 줄마다 높이를 40px씩 차이 두기 + 약간의 랜덤 높이(10px)로 자연스럽게
-    		const yPos = 40 + (row * 40) + (Math.random() * 10);
+    		// 가로 간격 40px, 세로 간격 25px
+    		const xPos = 220 + (column * 40); 
+    		const yPos = 40 + (row * 25) + (Math.random() * 5); // 약간의 랜덤함 추가
 
     		img.style.right = xPos + "px";
     		img.style.bottom = yPos + "px";
+
+    		// 캐릭터 겹침 순서 (뒷줄 캐릭터가 앞줄 캐릭터 뒤로 가게 설정)
+    		img.style.zIndex = 100 - row; 
     		// -----------------------
 
     		document.getElementById("characters-container").appendChild(img);
 
     		activeCharacters.push({
         		element: img,
-        		data: data,
+       			data: data,
         		timer: 0
     		});
 	}
