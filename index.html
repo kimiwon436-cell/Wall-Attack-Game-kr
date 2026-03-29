@@ -152,7 +152,7 @@
     </div>
 
     <div class="ui-box">
-        💰 돈: <span id="money">10000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
+        💰 돈: <span id="money">4000</span> &nbsp;&nbsp;⏰ <span id="play-time">00:00</span>
         <button class="btn-secondary" style="float: right; font-size: 14px; padding: 5px 10px;" onclick="viewRanking()">🏆 랭킹 보기</button>
         <div id="buff-status" style="color: red; font-size: 14px; margin-top: 5px;"></div>
     </div>
@@ -211,7 +211,7 @@
         const db = firebase.firestore();
 
 	// [기본 상태]
-	let currentUser = "", isGameRunning = false, money = 10000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
+	let currentUser = "", isGameRunning = false, money = 4000, wallMaxHp = 1000, wallHp = 1000, wallLevel = 1, playTimeSeconds = 0;
 
 	// [포션 타이머] 반드시 0으로 초기화
 	let p2Red = 0, p2Blue = 0, p2Gold = 0;
@@ -314,7 +314,7 @@
     		if(snap.exists) {
         		const s = snap.data();
         		// 기본 정보
-        		money = s.money || 1000; 
+        		money = s.money || 4000; 
         		wallMaxHp = s.wallMaxHp || 1000; 
         		wallHp = s.wallHp || 1000; 
         		wallLevel = s.wallLevel || 1;
