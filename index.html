@@ -2,13 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>벽 부수기 온라인</title>
     <style>
-        body { 
-            font-family: 'Arial', sans-serif; text-align: center; background-color: #f0f0f0; margin: 0; overflow: hidden; 
-            touch-action: none; /* 🌟 모바일에서 공격 시 화면 확대 방지 */
-        }
+        /* 기본 배경 및 정렬 */
+	body { 
+    		font-family: 'Arial', sans-serif; text-align: center; background-color: #f0f0f0; margin: 0; padding: 0;
+    		display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+	}
         
         /* 모바일 가로 모드 유도 */
         #landscape-warning { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#fff; z-index:9999; flex-direction:column; justify-content:center; align-items:center; font-size:24px; font-weight:bold; }
@@ -53,8 +54,29 @@
         .ui-box { display: none; padding: 10px; font-size: 20px; font-weight: bold; text-align: left; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
         
         /* 게임 보드 */
-        #game-wrapper { display: none; width: 100%; justify-content: center; overflow: hidden; height: 450px; }
-        #game-board { background-color: #fff; width: 800px; height: 450px; position: relative; border: 4px solid #444; transform-origin: top center; overflow: hidden; box-sizing: border-box; }
+        /* 상단바와 UI 영역이 차지하는 공간 제외하고 게임판 키우기 */
+	#game-wrapper { 
+    		display: none; 
+    		flex: 1; 
+   		width: 100%; 
+    		height: 100%; /* 높이 명시 */
+    		justify-content: center; 
+    		align-items: center; 
+    		background: #ccc; 
+    		overflow: hidden;
+    		position: relative; /* 위치 기준점 */
+	}
+
+	#game-board { 
+    		background-color: #fff; 
+    		width: 800px;  
+    		height: 450px; 
+    		position: absolute; /* 중앙 정렬을 위해 absolute 권장 */
+    		border: 4px solid #444; 
+    		box-sizing: border-box;
+    		transform-origin: center center; 
+    		flex-shrink: 0; /* 크기 줄어듦 방지 */
+	}
         
         #shop-btn { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); padding: 15px 10px; background-color: #ffd700; border: 3px solid #b8860b; font-weight: bold; font-size: 16px; cursor: pointer; border-radius: 10px; z-index: 10; }
         #wall { width: 120px; height: 250px; background-color: red; position: absolute; right: 80px; bottom: 50px; border: 4px solid #333; transition: background-color 0.3s; }
@@ -221,24 +243,33 @@
         let activeCharacters = [], savedCharactersList = [];
 
         // 3. 화면 리사이즈
-        function resizeGame() {
-            if(!isGameRunning) return;
-            const board = document.getElementById("game-board");
-            const wrapper = document.getElementById("game-wrapper");
-            const topBarHeight = document.getElementById("top-bar").offsetHeight || 0;
-            const uiBoxHeight = document.querySelector(".ui-box").offsetHeight || 0;
-            const availableHeight = window.innerHeight - topBarHeight - uiBoxHeight - 20;
-            const scale = Math.min(window.innerWidth / 820, availableHeight / 460);
-            if(scale < 1) {
-                board.style.transform = `scale(${scale})`;
-                wrapper.style.height = (450 * scale) + "px";
-            } else {
-                board.style.transform = "scale(1)";
-                wrapper.style.height = "450px";
-            }
-        }
-        window.addEventListener('resize', resizeGame);
+	function resizeGame() {
+    		if(!isGameRunning) return;
+    
+    		const board = document.getElementById("game-board");
+    		const wrapper = document.getElementById("game-wrapper");
+    
+    		// 현재 창의 너비와 높이 가져오기
+    		const windowWidth = window.innerWidth;
+    		const windowHeight = wrapper.clientHeight; // 상단바 제외 실제 게임 가능 영역 높이
 
+    		// 게임 보드의 기준 크기 (800x450) 대비 배율 계산
+    		const scaleX = windowWidth / 800;
+    		const scaleY = windowHeight / 450;
+    
+    		// 화면에 꽉 차면서도 비율을 유지하는 배율 결정 (0.95는 약간의 여백)
+    		const finalScale = Math.min(scaleX, scaleY) * 0.95;
+
+    		// 적용
+    		board.style.transform = `scale(${finalScale})`;
+	}
+
+	// 창 크기가 변할 때마다 실행
+	window.addEventListener('resize', resizeGame);
+	// 모바일 화면 회전 시 대응
+	window.addEventListener('orientationchange', () => {
+    		setTimeout(resizeGame, 300);
+	});
         // 4. 인증 (가입/로그인)
         async function attemptRegister() {
             let id = document.getElementById("username").value.trim(), pw = document.getElementById("password").value.trim();
@@ -260,14 +291,21 @@
             let id = document.getElementById("username").value.trim(), pw = document.getElementById("password").value.trim();
             if(!id || !pw) return alert("입력하세요.");
             const snap = await db.collection("users").doc(id).get();
-            if(snap.exists && snap.data().password === pw) {
-                currentUser = id; await loadGameData(id);
-                document.getElementById("login-screen").style.display = "none";
-                document.getElementById("top-bar").style.display = "flex";
-                document.getElementById("game-wrapper").style.display = "flex";
-                document.querySelector(".ui-box").style.display = "block";
-                isGameRunning = true; resizeGame(); updateUI();
-            } else alert("정보가 틀렸습니다.");
+            	if(snap.exists && snap.data().password === pw) {
+			currentUser = id; await loadGameData(id);
+			document.getElementById("login-screen").style.display = "none";
+			document.getElementById("top-bar").style.display = "flex";
+ 			document.getElementById("game-wrapper").style.display = "flex"; // 먼저 display를 flex로!
+			document.querySelector(".ui-box").style.display = "block";
+        
+			isGameRunning = true;
+        
+  			// 🌟 약간의 지연을 주어 브라우저가 레이아웃을 계산할 시간을 줍니다.
+  			setTimeout(() => {
+    				resizeGame();
+       				updateUI();
+   			}, 50);
+		}
         }
 
         // 5. 데이터 저장/로드 (이 부분을 찾아서 통째로 교체하세요)
@@ -475,14 +513,28 @@
         }
 
         function showFloatingText(dmg, earned, element) {
-            const floater = document.createElement("div"); floater.className = "damage-text";
-            floater.innerHTML = `⚔️${Math.floor(dmg)}<br><span style="color:#ffd700; font-size:14px;">💰+${Math.floor(earned)}</span>`;
-            let rect = element.getBoundingClientRect(); let boardRect = document.getElementById("game-board").getBoundingClientRect();
-            const scale = boardRect.width / 800; 
-            floater.style.left = ((rect.left - boardRect.left) / scale + 30) + "px"; 
-            floater.style.top = ((rect.top - boardRect.top) / scale - 20) + "px";
-            document.getElementById("game-board").appendChild(floater); setTimeout(() => floater.remove(), 1000);
-        }
+    		const floater = document.createElement("div"); 
+    		floater.className = "damage-text";
+    		floater.innerHTML = `⚔️${Math.floor(dmg)}<br><span style="color:#ffd700; font-size:14px;">💰+${Math.floor(earned)}</span>`;
+    
+    		// 캐릭터 엘리먼트의 상대적 위치 계산
+    		const charRect = element.getBoundingClientRect();
+    		const board = document.getElementById("game-board");
+    		const boardRect = board.getBoundingClientRect();
+    
+    		// 현재 적용된 scale 값 계산
+    		const curScale = boardRect.width / 800;
+
+    		// 스케일된 좌표를 다시 800x450 기준 좌표로 역산해서 배치
+    		const leftPos = (charRect.left - boardRect.left) / curScale + 30;
+    		const topPos = (charRect.top - boardRect.top) / curScale - 20;
+
+    		floater.style.left = leftPos + "px"; 
+    		floater.style.top = topPos + "px";
+    
+    		board.appendChild(floater); 
+    		setTimeout(() => floater.remove(), 1000);
+	}
 
         // [클릭 이벤트 함수] - 피버 활성화 로직 수정
 	function clickEvent() {
